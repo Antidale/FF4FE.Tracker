@@ -1,0 +1,170 @@
+﻿@using FF4FE.Tracker.Models;
+@using FF4FE.Tracker.Services;
+@using System.Text.Json;
+@using System.Collections;
+@using sni;
+@using static sni.DevicesResponse.Types;
+@inject DeviceService DeviceService
+
+<h3>Get Metadata</h3>
+
+<p>@ErrorMessage</p>
+
+@if (string.IsNullOrEmpty(_uri))
+{
+    <button @onclick="Connect">Connect</button>
+}
+
+@if (_connectedDevices != null && string.IsNullOrEmpty(_uri))
+{
+    <div>Select Device:</div>
+    <select @onchange="SelectedDeviceChanged">
+        <option value="" disabled selected> -- Select -- </option>
+        @foreach (var device in _connectedDevices)
+        {
+            <option value="@device">@device.DisplayName</option>
+        }
+    </select>
+}
+
+@if (!string.IsNullOrEmpty(_displayName))
+{
+    <p>Connected to: @_displayName</p>
+}
+
+@if (_objectives?.Any() ?? false)
+{
+    @foreach (var objective in _objectives)
+    {
+        <p>@objective</p>
+    }
+}
+
+@if (!string.IsNullOrEmpty(_flags))
+{
+    <p>@_flags</p>
+}
+
+@code {
+    private string? _uri;
+    private AddressSpace? _addressSpace;
+    private string? _displayName;
+    private string? ErrorMessage;
+    private List<Device>? _connectedDevices;
+    private string _flags = string.Empty;
+    private List<string> _objectives = new List<string>();
+
+    public async Task Connect()
+    {
+        DevicesResponse? connectedDevices = new DevicesResponse();
+
+        try
+        {
+            connectedDevices = await DeviceService.GetDevicesListAsync();
+        }
+        catch (NullReferenceException)
+        {
+            ErrorMessage = "Unable to connect to SNI. Please make sure it's running";
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+
+        if (connectedDevices?.Devices.Count == 1)
+        {
+            var connectedDevice = connectedDevices.Devices.First();
+            _uri = connectedDevice.Uri;
+            _addressSpace = connectedDevice.DefaultAddressSpace;
+            _displayName = connectedDevice.DisplayName;
+            await GetMetadataAsync();
+            await GetFoundKeyItems();
+        }
+        else if (connectedDevices?.Devices.Count > 1)
+        {
+            _connectedDevices = connectedDevices.Devices.ToList();
+        }
+        else
+        {
+            ErrorMessage = "No Devices found";
+        }
+    }
+
+    private async void SelectedDeviceChanged(ChangeEventArgs e)
+    {
+        if (e is not null && e.Value is not null)
+        {
+            if (e.Value is Device)
+            {
+                var device = (Device)e.Value;
+                _uri = device.Uri;
+                _addressSpace = device.DefaultAddressSpace;
+                _displayName = device.DisplayName;
+                await GetMetadataAsync();
+            }
+        }
+    }
+
+    private async Task GetMetadataAsync()
+    {
+        var readMemoryRequest = new SingleReadMemoryRequest
+            {
+                Request = new ReadMemoryRequest
+                {
+                    RequestAddress = 0x1FF000,
+                    //RequestAddress = 0xF51500,
+                    RequestAddressSpace = _addressSpace ?? AddressSpace.FxPakPro,
+                    RequestMemoryMapping = MemoryMapping.LoRom,
+                    Size = 4
+                },
+                Uri = _uri,
+            };
+
+        var channel = GrpcChannelService.GetGrpcChannel();
+        var memoryClient = new DeviceMemory.DeviceMemoryClient(channel);
+        var response = await memoryClient.SingleReadAsync(readMemoryRequest);
+
+        var jsonDocLength = BitConverter.ToInt32(response.Response.Data.ToArray(), 0);
+
+        var docString = await memoryClient.SingleReadAsync(new SingleReadMemoryRequest
+            {
+                Request = new ReadMemoryRequest
+                {
+                    RequestAddress = 0x1FF004,
+                    RequestAddressSpace = _addressSpace ?? AddressSpace.FxPakPro,
+                    RequestMemoryMapping = MemoryMapping.LoRom,
+                    Size = (uint)jsonDocLength
+                },
+                Uri = _uri,
+            });
+
+        var metadata = JsonSerializer.Deserialize<SeedMetadata>(docString.Response.Data.ToStringUtf8());
+        _objectives = metadata?.Objectives ?? _objectives;
+        _flags = metadata?.Flags ?? _flags;
+    }
+
+    public async Task GetFoundKeyItems()
+    {
+        var channel = GrpcChannelService.GetGrpcChannel();
+        var memoryClient = new DeviceMemory.DeviceMemoryClient(channel);
+
+        var readMemoryRequest = new SingleReadMemoryRequest
+            {
+                Request = new ReadMemoryRequest
+                {
+                    RequestAddress = 0xF51500,
+                    RequestAddressSpace = _addressSpace ?? AddressSpace.FxPakPro,
+                    RequestMemoryMapping = MemoryMapping.LoRom,
+                    Size = 1
+                },
+                Uri = _uri,
+            };
+
+        var response = await memoryClient.SingleReadAsync(readMemoryRequest);
+        var reponseData = response.Response.Data.ToByteArray();
+        var stuff = new BitArray(reponseData.First());
+
+        var what = stuff[0];
+
+    }
+}

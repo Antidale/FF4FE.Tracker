@@ -1,0 +1,86 @@
+﻿@using FF4FE.Tracker.Services;
+@using sni;
+@using static sni.DevicesResponse.Types;
+@inject DeviceService DeviceService
+
+<h3>DeviceConnection</h3>
+
+<p>@ErrorMessage</p>
+
+@if (string.IsNullOrEmpty(_uri))
+{
+    <button @onclick="Connect">Connect</button>
+}
+
+@if (_connectedDevices != null && string.IsNullOrEmpty(_uri))
+{
+    <div>Select Device:</div>
+    <select @onchange="SelectedDeviceChanged">
+        <option value="" disabled selected> -- Select -- </option>
+        @foreach (var device in _connectedDevices)
+        {
+            <option value="@device">@device.DisplayName</option>
+        }
+    </select>
+}
+
+@if (!string.IsNullOrEmpty(_displayName))
+{
+    <p>Connected to: @_displayName</p>
+}
+
+@code {
+    private string? _uri;
+    private AddressSpace? _addressSpace;
+    private string? _displayName;
+    private string? ErrorMessage;
+    private List<Device>? _connectedDevices;
+
+    public async Task Connect()
+    {
+        DevicesResponse? connectedDevices = new DevicesResponse();
+
+        try
+        {
+            connectedDevices = await DeviceService.GetDevicesListAsync();
+        }
+        catch (NullReferenceException)
+        {
+            ErrorMessage = "Unable to connect to SNI. Please make sure it's running";
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+
+        if (connectedDevices?.Devices.Count == 1)
+        {
+            var connectedDevice = connectedDevices.Devices.First();
+            _uri = connectedDevice.Uri;
+            _addressSpace = connectedDevice.DefaultAddressSpace;
+            _displayName = connectedDevice.DisplayName;
+        }
+        else if (connectedDevices?.Devices.Count > 1)
+        {
+            _connectedDevices = connectedDevices.Devices.ToList();
+        }
+        else
+        {
+            ErrorMessage = "No Devices found";
+        }
+    }
+
+    private void SelectedDeviceChanged(ChangeEventArgs e)
+    {
+        if (e is not null && e.Value is not null)
+        {
+            if (e.Value is Device)
+            {
+                var device = (Device)e.Value;
+                _uri = device.Uri;
+                _addressSpace = device.DefaultAddressSpace;
+                _displayName = device.DisplayName;
+            }
+        }
+    }
+}
