@@ -101,19 +101,6 @@ a, .btn-link {
     }
 
 .tracker-grid {
-    width: 140px;
-    padding: 5px;
-    display: grid;
-    grid-template-columns: repeat(4, 32px);
-    grid-template-rows: repeat(5, 32px);
-    row-gap: 3px;
-    column-gap: 3px;
-    grid-template-areas:
-        "Crystal        Pass        Hook        DarknessCrystal"
-        "EarthCrystal   TwinHarp    Package     SandRuby"
-        "BaronKey       MagmaKey    TowerKey    LucaKey"
-        "Adamant        LegendSword Pan         Spoon"
-        ".              RatTail     PinkTail    .";
-    justify-items: center;
-    align-items: center;
+    width: fit-content;
+    background-color: darkblue;
 }

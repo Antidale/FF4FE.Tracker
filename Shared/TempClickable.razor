@@ -1,0 +1,19 @@
+﻿@using FeTracker.Common.Icons
+@using FeTracker.Common.Interfaces
+
+<img src="@Path.Combine(IconFolderPath, Icon?.FileName ?? string.Empty)" @onclick=@HandleClick class="@Icon?.Class">
+
+@code {
+    [CascadingParameter]
+    public string IconFolderPath { get; set; } = "Icons/";
+
+    [Parameter]
+    public IClickable? Icon { get; set; }
+
+    private string CombinedPath { get; set; } = string.Empty;
+
+    private void HandleClick()
+    {
+        Icon?.HandleClick();
+    }
+}
