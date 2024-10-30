@@ -175,9 +175,20 @@
         var stuff = new BitArray(reponseData);
 
         var stringBuilder = new StringBuilder();
-        for(var i = 0; i < stuff.Length; i++)
+        _testKi.Add("Found KI");
+        for(var i = 0; i < 17; i++)
         {
-            _testKi.Add($"Index {i}, Value: {stuff[i]}");
+            _testKi.Add($"Index {(KeyItem)i}, Value: {stuff[i]}");
+        }
+
+        readMemoryRequest.Request.RequestAddress = 0xF51503;
+        response = await memoryClient.SingleReadAsync(readMemoryRequest);
+        reponseData = response.Response.Data.ToByteArray();
+        stuff = new BitArray(reponseData);
+        _testKi.Add("Used KI");
+        for(var i = 0; i < 17; i++)
+        {
+            _testKi.Add($"Index {(KeyItem)i}, Value: {stuff[i]}");
         }
     }
 }
