@@ -87,6 +87,7 @@
             _uri = connectedDevice.Uri;
             _addressSpace = connectedDevice.DefaultAddressSpace;
             _displayName = connectedDevice.DisplayName;
+            //RpcException - Status(StatusCode="Unknown", Detail="fxpakpro: device not configured")
             await GetMetadataAsync();
             await GetFoundKeyItems();
         }
