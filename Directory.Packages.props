@@ -6,13 +6,13 @@
 
   <ItemGroup>
 
-    <PackageVersion Include="FeTracker.Common.RazorComponents" Version="1.0.0-alpha-5" />
-    <PackageVersion Include="Google.Protobuf" Version="3.25.2" />
-    <PackageVersion Include="Grpc.Net.Client" Version="2.60.0" />
-    <PackageVersion Include="Grpc.Net.Client.Web" Version="2.60.0" />
-    <PackageVersion Include="Grpc.Tools" Version="2.61.0" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.1" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.1" />
+    <PackageVersion Include="FeTracker.Common.RazorComponents" Version="1.0.1-beta " />
+    <PackageVersion Include="Google.Protobuf" Version="3.30.2" />
+    <PackageVersion Include="Grpc.Net.Client" Version="2.71.0" />
+    <PackageVersion Include="Grpc.Net.Client.Web" Version="2.71.0" />
+    <PackageVersion Include="Grpc.Tools" Version="2.72.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.4" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.4" />
   
   </ItemGroup>
 </Project>
