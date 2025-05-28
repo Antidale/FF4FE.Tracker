@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+	<PackageReference Include="FeTracker.AutoTrack.Sni" />
 	<PackageReference Include="FeTracker.Common.RazorComponents" />
 	<PackageReference Include="Google.Protobuf" />
 	<PackageReference Include="Grpc.Net.Client" />
