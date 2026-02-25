@@ -13,7 +13,7 @@ namespace FF4FE.Tracker.Models
         [JsonPropertyName("seed")]
         public string Seed { get; set; } = string.Empty;
 
-        [JsonPropertyName("objectives")]
-        public List<string> Objectives { get; set; } = new List<string>();
+        // [JsonPropertyName("objectives")]
+        // public List<string> Objectives { get; set; } = new List<string>();
     }
 }

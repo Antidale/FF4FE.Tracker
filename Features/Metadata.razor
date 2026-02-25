@@ -17,6 +17,11 @@
     <button @onclick="Connect">Connect</button>
 }
 
+@if (!string.IsNullOrEmpty(_displayName))
+{
+    <button @onclick="GetMetadataAsync">Get Metadata</button>
+}
+
 @if (_connectedDevices != null && string.IsNullOrEmpty(_uri))
 {
     <div>Select Device:</div>
@@ -47,21 +52,21 @@
     <p>@_flags</p>
 }
 
-@foreach(var thing in _testKi)
+@foreach (var thing in _testKi)
 {
-    <p>@thing</p>    
+    <p>@thing</p>
 }
 
 
 @code {
     private string? _uri;
-    private AddressSpace? _addressSpace;
     private string? _displayName;
     private string? ErrorMessage;
     private List<Device>? _connectedDevices;
     private string _flags = string.Empty;
     private List<string> _objectives = new List<string>();
-    private Dictionary<KeyItem, bool> _keyItems = Enum.GetValues<KeyItem>().Cast<KeyItem>().ToDictionary(x => x, x => false);
+    private Dictionary<KeyItem, bool> _keyItems = Enum.GetValues<KeyItem>()
+                                                      .Cast<KeyItem>().ToDictionary(x => x, x => false);
     private List<string> _testKi = [];
 
     public async Task Connect()
@@ -85,11 +90,7 @@
         {
             var connectedDevice = connectedDevices.Devices.First();
             _uri = connectedDevice.Uri;
-            _addressSpace = connectedDevice.DefaultAddressSpace;
             _displayName = connectedDevice.DisplayName;
-            //RpcException - Status(StatusCode="Unknown", Detail="fxpakpro: device not configured")
-            await GetMetadataAsync();
-            await GetFoundKeyItems();
         }
         else if (connectedDevices?.Devices.Count > 1)
         {
@@ -109,7 +110,6 @@
             {
                 var device = (Device)e.Value;
                 _uri = device.Uri;
-                _addressSpace = device.DefaultAddressSpace;
                 _displayName = device.DisplayName;
                 await GetMetadataAsync();
             }
@@ -119,16 +119,16 @@
     private async Task GetMetadataAsync()
     {
         var readMemoryRequest = new SingleReadMemoryRequest
+        {
+            Request = new ReadMemoryRequest
             {
-                Request = new ReadMemoryRequest
-                {
-                    RequestAddress = 0x1FF000,
-                    RequestAddressSpace = AddressSpace.FxPakPro,
-                    RequestMemoryMapping = MemoryMapping.Unknown,
-                    Size = 4
-                },
-                Uri = _uri,
-            };
+                RequestAddress = 0x1FF000,
+                RequestAddressSpace = AddressSpace.FxPakPro,
+                RequestMemoryMapping = MemoryMapping.Unknown,
+                Size = 4
+            },
+            Uri = _uri,
+        };
 
         var channel = GrpcChannelService.GetGrpcChannel();
         var memoryClient = new DeviceMemory.DeviceMemoryClient(channel);
@@ -137,19 +137,19 @@
         var jsonDocLength = BitConverter.ToInt32(response.Response.Data.ToArray(), 0);
 
         var docString = await memoryClient.SingleReadAsync(new SingleReadMemoryRequest
+        {
+            Request = new ReadMemoryRequest
             {
-                Request = new ReadMemoryRequest
-                {
-                    RequestAddress = 0x1FF004,
-                    RequestAddressSpace = AddressSpace.FxPakPro,
-                    RequestMemoryMapping = MemoryMapping.Unknown,
-                    Size = (uint)jsonDocLength
-                },
-                Uri = _uri,
-            });
+                RequestAddress = 0x1FF004,
+                RequestAddressSpace = AddressSpace.FxPakPro,
+                RequestMemoryMapping = MemoryMapping.Unknown,
+                Size = (uint)jsonDocLength
+            },
+            Uri = _uri,
+        });
 
         var metadata = JsonSerializer.Deserialize<SeedMetadata>(docString.Response.Data.ToStringUtf8());
-        _objectives = metadata?.Objectives ?? _objectives;
+        //_objectives = metadata?.Objectives ?? _objectives;
         _flags = metadata?.Flags ?? _flags;
     }
 
@@ -177,7 +177,7 @@
 
         var stringBuilder = new StringBuilder();
         _testKi.Add("Found KI");
-        for(var i = 0; i < 17; i++)
+        for (var i = 0; i < 17; i++)
         {
             _testKi.Add($"Index {(KeyItem)i}, Value: {stuff[i]}");
         }
@@ -187,7 +187,7 @@
         reponseData = response.Response.Data.ToByteArray();
         stuff = new BitArray(reponseData);
         _testKi.Add("Used KI");
-        for(var i = 0; i < 17; i++)
+        for (var i = 0; i < 17; i++)
         {
             _testKi.Add($"Index {(KeyItem)i}, Value: {stuff[i]}");
         }
