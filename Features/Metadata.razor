@@ -39,12 +39,9 @@
     <p>Connected to: @_displayName</p>
 }
 
-@if (_objectives?.Any() ?? false)
+@if (!string.IsNullOrWhiteSpace(_objectives))
 {
-    @foreach (var objective in _objectives)
-    {
-        <p>@objective</p>
-    }
+    <div>@_objectives</div>
 }
 
 @if (!string.IsNullOrEmpty(_flags))
@@ -64,9 +61,9 @@
     private string? ErrorMessage;
     private List<Device>? _connectedDevices;
     private string _flags = string.Empty;
-    private List<string> _objectives = new List<string>();
-    private Dictionary<KeyItem, bool> _keyItems = Enum.GetValues<KeyItem>()
-                                                      .Cast<KeyItem>().ToDictionary(x => x, x => false);
+    private string _objectives = string.Empty;
+    private Dictionary<KeyItem, bool> _keyItems = Enum.GetValues<KeyItem>().Cast<KeyItem>().ToDictionary(x => x, x =>
+false);
     private List<string> _testKi = [];
 
     public async Task Connect()
@@ -160,6 +157,7 @@
             Uri = _uri,
         });
 
+        var stuff = docString.Response.Data.ToStringUtf8();
         var metadata = JsonSerializer.Deserialize<SeedMetadata>(docString.Response.Data.ToStringUtf8());
         Console.WriteLine(metadata?.Version ?? "no version found");
 
