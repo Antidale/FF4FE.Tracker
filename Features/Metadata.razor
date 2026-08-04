@@ -1,9 +1,9 @@
-﻿@using FF4FE.Tracker.Models;
-@using FF4FE.Tracker.Services;
-@using System.Text.Json;
-@using System.Collections;
-@using FeTracker.Common.Enums
+﻿@using System.Collections;
 @using System.Text
+@using System.Text.Json;
+@using FF4FE.Tracker.Models;
+@using FF4FE.Tracker.Services;
+@using FeTracker.Common.Enums
 @using sni;
 @using static sni.DevicesResponse.Types;
 @inject DeviceService DeviceService
@@ -130,9 +130,21 @@
             Uri = _uri,
         };
 
+        SingleReadMemoryResponse response = new SingleReadMemoryResponse();
         var channel = GrpcChannelService.GetGrpcChannel();
         var memoryClient = new DeviceMemory.DeviceMemoryClient(channel);
-        var response = await memoryClient.SingleReadAsync(readMemoryRequest, deadline: DateTime.UtcNow.AddMilliseconds(100));
+
+        for (var count = 0; count <= 10; count++)
+        {
+            try
+            {
+                response = await memoryClient.SingleReadAsync(readMemoryRequest, deadline: DateTime.UtcNow.AddMilliseconds(100));
+            }
+            catch (Exception)
+            {
+                Thread.Sleep(100);
+            }
+        }
 
         var jsonDocLength = BitConverter.ToInt32(response.Response.Data.ToArray(), 0);
 
@@ -149,8 +161,19 @@
         });
 
         var metadata = JsonSerializer.Deserialize<SeedMetadata>(docString.Response.Data.ToStringUtf8());
+        Console.WriteLine(metadata?.Version ?? "no version found");
+
+        if (!string.IsNullOrWhiteSpace(metadata?.Version) && metadata?.Version == "5.0.4")
+        {
+            Console.WriteLine("unzip it!");
+        }
+
         //_objectives = metadata?.Objectives ?? _objectives;
-        _flags = metadata?.Flags ?? _flags;
+        _flags = metadata?.Flags ?? "no flags found. . . sadness";
+        if (string.IsNullOrWhiteSpace(_flags))
+        {
+            _flags = "no flags found.... sadness";
+        }
     }
 
     public async Task GetFoundKeyItems()
