@@ -1,12 +1,25 @@
-﻿@using FeTracker.Common.Icons
+﻿@using FeTracker.Common.Constants
 @using FeTracker.Common.Enums
+@using FeTracker.Common.Icons
+@using FeTracker.Common.RazorComponents
+@inject TrackerNotifier notifier
 
+@*
+    This and TempClickable are hanging around for some future tinkering in case of other changes like:
+        * actual autotracking testing
+        * highlighing objective related key items
+        * ?
+ *@
+ 
 <div class="tracker-grid">
+
     @for (var i = 0; i < Icons.Count(); i++)
     {
         var internalIndex = i;
         <TempClickable Icon=Icons[internalIndex] />
     }
+    <section class="Count">@Count</section>
+
 </div>
 
 <button @onclick="@Refresh">Refresh</button>
@@ -15,17 +28,16 @@
 
     List<KeyItemIcon> Icons = [];
 
+    int Count = 0;
+
     protected override void OnInitialized()
     {
-        foreach (KeyItem iconType in Enum.GetValues<KeyItem>())
-        {
-            Icons.Add(new KeyItemIcon(iconType));
-        }
-
+        Icons.AddRange(Enum.GetValues<KeyItem>().Select(x => new KeyItemIcon(x)));
+        notifier.RegisterCallback(new(this, HandleNotification));
         base.OnInitialized();
     }
 
-    public async Task Refresh()
+    public void Refresh()
     {
         Icons = [];
         foreach (var icon in Enum.GetValues<KeyItem>())
@@ -33,5 +45,29 @@
             Icons.Add(new KeyItemIcon(icon));
         }
         StateHasChanged();
+        UpdateCount();
+
+    }
+
+    private void HandleNotification(StatePropertyChangedArgs args)
+    {
+        switch (args.PropertyName)
+        {
+            case NotificationConstants.Reset:
+                Refresh();
+                break;
+            case NotificationConstants.KeyItemFound:
+                UpdateCount();
+                break;
+
+        }
+        StateHasChanged();
+    }
+
+    private void UpdateCount()
+    {
+        Count = notifier.Version.StartsWith("v5.")
+        ? Icons.Count(x => x.State != IconState.Gray)
+        : Icons.Count(x => x.Icon != KeyItem.Pass && x.State != IconState.Gray);
     }
 }

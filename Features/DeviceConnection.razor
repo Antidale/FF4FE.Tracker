@@ -1,18 +1,13 @@
-﻿@using FF4FE.Tracker.Services;
+﻿@using FeTracker.AutoTrack.Sni.Services
 @using sni;
 @using static sni.DevicesResponse.Types;
 @inject DeviceService DeviceService
 
-<h3>DeviceConnection</h3>
 
-<p>@ErrorMessage</p>
+<button @onclick="Connect" class="nf @ConnectionClass"></button>
 
-@if (string.IsNullOrEmpty(_uri))
-{
-    <button @onclick="Connect">Connect</button>
-}
 
-@if (_connectedDevices != null && string.IsNullOrEmpty(_uri))
+@if (_connectedDevices != null && string.IsNullOrEmpty(AppState.Uri))
 {
     <div>Select Device:</div>
     <select @onchange="SelectedDeviceChanged">
@@ -24,25 +19,22 @@
     </select>
 }
 
-@if (!string.IsNullOrEmpty(_displayName))
-{
-    <p>Connected to: @_displayName</p>
-}
+<p>@ErrorMessage</p>
 
 @code {
-    private string? _uri;
-    private AddressSpace? _addressSpace;
-    private string? _displayName;
+    [CascadingParameter]
+    CascadingAppState AppState { get; set; } = new();
     private string? ErrorMessage;
     private List<Device>? _connectedDevices;
+    string ConnectionClass = "nf-md-power_plug_off";
 
     public async Task Connect()
     {
-        DevicesResponse? connectedDevices = new DevicesResponse();
+        DevicesResponse connectedDevices = new();
 
         try
         {
-            connectedDevices = await DeviceService.GetDevicesListAsync();
+            connectedDevices = await DeviceService.GetDevicesListAsync() ?? connectedDevices;
         }
         catch (NullReferenceException)
         {
@@ -53,21 +45,27 @@
             ErrorMessage = ex.Message;
         }
 
-        if (connectedDevices?.Devices.Count == 1)
+        if (connectedDevices.Devices.Count >= 1)
         {
             var connectedDevice = connectedDevices.Devices.First();
-            _uri = connectedDevice.Uri;
-            _addressSpace = connectedDevice.DefaultAddressSpace;
-            _displayName = connectedDevice.DisplayName;
+            SetSelectedDevice(connectedDevice);
         }
-        else if (connectedDevices?.Devices.Count > 1)
+        //Eventually re-allow support for selecting among multiple devices that are connected to SNI
+        @* else if (connectedDevices?.Devices.Count > 1)
         {
-            _connectedDevices = connectedDevices.Devices.ToList();
-        }
+            _connectedDevices = connectedDevices.Devices.First();
+        } *@
         else
         {
             ErrorMessage = "No Devices found";
         }
+    }
+
+    private void SetSelectedDevice(Device device)
+    {
+        AppState.Uri = device.Uri;
+        AppState.DeviceName = device.DisplayName;
+        ConnectionClass = "nf-md-power_plug";
     }
 
     private void SelectedDeviceChanged(ChangeEventArgs e)
@@ -77,9 +75,7 @@
             if (e.Value is Device)
             {
                 var device = (Device)e.Value;
-                _uri = device.Uri;
-                _addressSpace = device.DefaultAddressSpace;
-                _displayName = device.DisplayName;
+                SetSelectedDevice(device);
             }
         }
     }

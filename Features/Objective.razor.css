@@ -1,0 +1,8 @@
+li input {
+    display: none;
+}
+
+input:checked+label {
+    text-decoration: line-through;
+    color: slategray
+}

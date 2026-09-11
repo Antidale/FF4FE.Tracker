@@ -1,4 +1,6 @@
-﻿<CascadingValue Value="this">
+﻿@using FeTracker.Common.RazorComponents
+
+<CascadingValue Value="this">
     @ChildContent
 </CascadingValue>
 
@@ -33,25 +35,49 @@
         }
     }
 
-    private string host = "localhost";
-    public string Host 
+    public string Host
     {
-        get => host;
-        set 
-        {
-            host = value;
-            StateHasChanged();
-        }
-    }
-
-    private int port = 8190;
-    public int Port
-    {
-        get => port;
+        get;
         set
         {
-            port = value;
-            StateHasChanged();
+            field = value; StateHasChanged();
         }
-    }
+    } = "localhost";
+
+
+    public int Port
+    {
+        get;
+        set { field = value; StateHasChanged(); }
+    } = 8190;
+
+    public string Uri
+    {
+        get;
+        set { field = value; StateHasChanged(); }
+    } = string.Empty;
+
+    public string RomFileName
+    {
+        get;
+        set { field = value; StateHasChanged(); }
+    } = string.Empty;
+
+    public string DeviceName
+    {
+        get;
+        set { field = value; StateHasChanged(); }
+    } = string.Empty;
+
+    public string BackgroundColor
+    {
+        get;
+        set { field = value; StateHasChanged(); }
+    } = string.Empty;
+
+    public string TextColor
+    {
+        get;
+        set { field = value; StateHasChanged(); }
+    } = string.Empty;
 }

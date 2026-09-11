@@ -2,115 +2,49 @@
 @using System.Text
 @using System.Text.Json;
 @using FF4FE.Tracker.Models;
-@using FF4FE.Tracker.Services;
+@using FeTracker.AutoTrack.Sni.Constants
+@using FeTracker.AutoTrack.Sni.Services
+@using FeTracker.Common.Constants
 @using FeTracker.Common.Enums
+@using FeTracker.Common.RazorComponents
 @using sni;
-@using static sni.DevicesResponse.Types;
 @inject DeviceService DeviceService
+@inject TrackerNotifier trackerNotifier
 
-<h3>Get Metadata</h3>
-
-<p>@ErrorMessage</p>
-
-@if (string.IsNullOrEmpty(_uri))
+@if (!string.IsNullOrWhiteSpace(AppState.Uri))
 {
-    <button @onclick="Connect">Connect</button>
-}
-
-@if (!string.IsNullOrEmpty(_displayName))
-{
-    <button @onclick="GetMetadataAsync">Get Metadata</button>
-}
-
-@if (_connectedDevices != null && string.IsNullOrEmpty(_uri))
-{
-    <div>Select Device:</div>
-    <select @onchange="SelectedDeviceChanged">
-        <option value="" disabled selected> -- Select -- </option>
-        @foreach (var device in _connectedDevices)
-        {
-            <option value="@device">@device.DisplayName</option>
-        }
-    </select>
-}
-
-@if (!string.IsNullOrEmpty(_displayName))
-{
-    <p>Connected to: @_displayName</p>
-}
-
-@if (!string.IsNullOrWhiteSpace(_objectives))
-{
-    <div>@_objectives</div>
-}
-
-@if (!string.IsNullOrEmpty(_flags))
-{
-    <p>@_flags</p>
-}
-
-@foreach (var thing in _testKi)
-{
-    <p>@thing</p>
-}
-
-
-@code {
-    private string? _uri;
-    private string? _displayName;
-    private string? ErrorMessage;
-    private List<Device>? _connectedDevices;
-    private string _flags = string.Empty;
-    private string _objectives = string.Empty;
-    private Dictionary<KeyItem, bool> _keyItems = Enum.GetValues<KeyItem>().Cast<KeyItem>().ToDictionary(x => x, x =>
-false);
-    private List<string> _testKi = [];
-
-    public async Task Connect()
+    @if (!string.IsNullOrEmpty(AppState.DeviceName) && string.IsNullOrEmpty(_flags))
     {
-        DevicesResponse? connectedDevices = new DevicesResponse();
-
-        try
-        {
-            connectedDevices = await DeviceService.GetDevicesListAsync();
-        }
-        catch (NullReferenceException)
-        {
-            ErrorMessage = "Unable to connect to SNI. Please make sure it's running";
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = ex.Message;
-        }
-
-        if (connectedDevices?.Devices.Count == 1)
-        {
-            var connectedDevice = connectedDevices.Devices.First();
-            _uri = connectedDevice.Uri;
-            _displayName = connectedDevice.DisplayName;
-        }
-        else if (connectedDevices?.Devices.Count > 1)
-        {
-            _connectedDevices = connectedDevices.Devices.ToList();
-        }
-        else
-        {
-            ErrorMessage = "No Devices found";
-        }
+        <button @onclick="GetMetadataAsync">Get Metadata</button>
     }
 
-    private async void SelectedDeviceChanged(ChangeEventArgs e)
+    <p>@ErrorMessage</p>
+
+    @if (_objectives.Any())
     {
-        if (e is not null && e.Value is not null)
-        {
-            if (e.Value is Device)
+        <ul>
+            @foreach (var obj in _objectives)
             {
-                var device = (Device)e.Value;
-                _uri = device.Uri;
-                _displayName = device.DisplayName;
-                await GetMetadataAsync();
+                <Objective ObjectiveText="@obj" />
             }
-        }
+        </ul>
+    }
+}
+
+@code {
+    [CascadingParameter]
+    CascadingAppState AppState { get; set; } = new();
+    private string? ErrorMessage;
+    private string _flags = string.Empty;
+    private List<string> _objectives = [];
+    private Dictionary<KeyItem, bool> _keyItems = Enum.GetValues<KeyItem>().Cast<KeyItem>().ToDictionary(x => x, x =>
+false);
+    FieldsResponse? fieldsResponse = null;
+
+    protected override void OnInitialized()
+    {
+        trackerNotifier.RegisterCallback(new(this, ResetMetadata));
+        base.OnInitialized();
     }
 
     private async Task GetMetadataAsync()
@@ -119,16 +53,29 @@ false);
         {
             Request = new ReadMemoryRequest
             {
-                RequestAddress = 0x1FF000,
+                RequestAddress = AddressData.Metadata.Address,
                 RequestAddressSpace = AddressSpace.FxPakPro,
                 RequestMemoryMapping = MemoryMapping.Unknown,
-                Size = 4
+                Size = AddressData.Metadata.Size
             },
-            Uri = _uri,
+            Uri = AppState.Uri,
         };
 
         SingleReadMemoryResponse response = new SingleReadMemoryResponse();
-        var channel = GrpcChannelService.GetGrpcChannel();
+        var channel = GrpcChannelService.GetChannel(AppState.Port, AppState.Host, true);
+        var infoClient = new DeviceInfo.DeviceInfoClient(channel);
+        fieldsResponse = await infoClient.FetchFieldsAsync(
+            request: new FieldsRequest()
+            {
+                Uri = AppState.Uri,
+                Fields = {
+                    Field.CoreName, Field.CorePlatform, Field.CoreVersion,
+                    Field.DeviceName, Field.DeviceStatus, Field.DeviceVersion,
+                    Field.RomFileName, Field.RomHashType, Field.RomHashValue
+                }
+            }
+        );
+
         var memoryClient = new DeviceMemory.DeviceMemoryClient(channel);
 
         for (var count = 0; count <= 10; count++)
@@ -143,52 +90,61 @@ false);
             }
         }
 
-        var jsonDocLength = BitConverter.ToInt32(response.Response.Data.ToArray(), 0);
-
-        var docString = await memoryClient.SingleReadAsync(new SingleReadMemoryRequest
+        try
         {
-            Request = new ReadMemoryRequest
+            var jsonDocLength = BitConverter.ToInt32(response.Response.Data.ToArray(), 0);
+
+            var docString = await memoryClient.SingleReadAsync(new SingleReadMemoryRequest
             {
-                RequestAddress = 0x1FF004,
-                RequestAddressSpace = AddressSpace.FxPakPro,
-                RequestMemoryMapping = MemoryMapping.Unknown,
-                Size = (uint)jsonDocLength
-            },
-            Uri = _uri,
-        });
+                Request = new ReadMemoryRequest
+                {
+                    RequestAddress = AddressData.JsonDocument.Address,
+                    RequestAddressSpace = AddressSpace.FxPakPro,
+                    RequestMemoryMapping = MemoryMapping.Unknown,
+                    Size = (uint)jsonDocLength
+                },
+                Uri = AppState.Uri,
+            });
 
-        var stuff = docString.Response.Data.ToStringUtf8();
-        var metadata = JsonSerializer.Deserialize<SeedMetadata>(docString.Response.Data.ToStringUtf8());
-        Console.WriteLine(metadata?.Version ?? "no version found");
+            var stuff = docString.Response.Data.ToStringUtf8();
+            var metadata = JsonSerializer.Deserialize<SeedMetadata>(docString.Response.Data.ToStringUtf8());
+            Console.WriteLine(metadata?.Version ?? "no version found");
 
-        if (!string.IsNullOrWhiteSpace(metadata?.Version) && metadata?.Version == "5.0.4")
+            if (!string.IsNullOrWhiteSpace(metadata?.Version) && metadata?.Version == "5.0.4")
+            {
+                Console.WriteLine("unzip it!");
+            }
+
+            _objectives = metadata?.Objectives ?? _objectives;
+            _flags = metadata?.Flags ?? "no flags found. . . sadness";
+            if (string.IsNullOrWhiteSpace(_flags))
+            {
+                _flags = "no flags found.... sadness";
+            }
+        }
+        catch (Exception ex)
         {
-            Console.WriteLine("unzip it!");
+            ErrorMessage = "Error while trying to get metadata. Make sure you have an FE rom loaded.";
+            Console.WriteLine(ex.Message);
         }
 
-        //_objectives = metadata?.Objectives ?? _objectives;
-        _flags = metadata?.Flags ?? "no flags found. . . sadness";
-        if (string.IsNullOrWhiteSpace(_flags))
-        {
-            _flags = "no flags found.... sadness";
-        }
     }
 
     public async Task GetFoundKeyItems()
     {
-        var channel = GrpcChannelService.GetGrpcChannel();
+        var channel = GrpcChannelService.GetChannel(AppState.Port, AppState.Host, true);
         var memoryClient = new DeviceMemory.DeviceMemoryClient(channel);
 
         var readMemoryRequest = new SingleReadMemoryRequest
         {
             Request = new ReadMemoryRequest
             {
-                RequestAddress = 0xF51500,
+                RequestAddress = AddressData.FOUND_KEY_ITEMS.Address,
                 RequestAddressSpace = AddressSpace.FxPakPro,
                 RequestMemoryMapping = MemoryMapping.LoRom,
-                Size = 3
+                Size = AddressData.FOUND_KEY_ITEMS.Size
             },
-            Uri = _uri,
+            Uri = AppState.Uri,
         };
 
         var response = await memoryClient.SingleReadAsync(readMemoryRequest);
@@ -197,20 +153,29 @@ false);
         var stuff = new BitArray(reponseData);
 
         var stringBuilder = new StringBuilder();
-        _testKi.Add("Found KI");
+        @* _testKi.Add("Found KI");
         for (var i = 0; i < 17; i++)
         {
             _testKi.Add($"Index {(KeyItem)i}, Value: {stuff[i]}");
-        }
+        } *@
 
-        readMemoryRequest.Request.RequestAddress = 0xF51503;
+        readMemoryRequest.Request.RequestAddress = AddressData.USED_KEY_ITEMS.Address;
+        readMemoryRequest.Request.Size = AddressData.USED_KEY_ITEMS.Size;
         response = await memoryClient.SingleReadAsync(readMemoryRequest);
         reponseData = response.Response.Data.ToByteArray();
         stuff = new BitArray(reponseData);
-        _testKi.Add("Used KI");
+        @* _testKi.Add("Used KI");
         for (var i = 0; i < 17; i++)
         {
             _testKi.Add($"Index {(KeyItem)i}, Value: {stuff[i]}");
-        }
+        } *@
+    }
+
+    private void ResetMetadata(StatePropertyChangedArgs args)
+    {
+        if (args.PropertyName != NotificationConstants.Reset) return;
+        _flags = string.Empty;
+        _objectives = [];
+        StateHasChanged();
     }
 }

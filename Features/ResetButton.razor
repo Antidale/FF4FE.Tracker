@@ -1,0 +1,15 @@
+@using FeTracker.Common.Constants
+@using FeTracker.Common.RazorComponents
+@inject TrackerNotifier notifier
+
+<button @onclick="@CallReset">
+    Reset Tracker
+</button>
+
+@code {
+    public void CallReset()
+    {
+        notifier.NotifyPropertyChanged(new(NotificationConstants.Reset, true));
+        StateHasChanged();
+    }
+}
