@@ -3,6 +3,12 @@
     <label for="@ObjectiveText">@ObjectiveText</label>
 </li>
 @code {
+    /*
+        also needs to know if objective is required
+        could learn/be able to determine what KI are required to use it
+        Parent component should list how many are overall required
+            5.0 this swaps to the rewards section
+    */
     [Parameter]
     public required string ObjectiveText { get; init; }
 

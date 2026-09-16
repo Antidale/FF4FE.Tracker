@@ -134,7 +134,6 @@ false);
     {
         var channel = GrpcChannelService.GetChannel(AppState.Port, AppState.Host, true);
         var memoryClient = new DeviceMemory.DeviceMemoryClient(channel);
-
         var readMemoryRequest = new SingleReadMemoryRequest
         {
             Request = new ReadMemoryRequest
