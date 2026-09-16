@@ -150,3 +150,8 @@ a,
     padding: 7px;
     row-gap: 5px;
 }
+
+.Count {
+    font-size: 1.6rem;
+    padding-left: 4px;
+}
