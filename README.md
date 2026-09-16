@@ -19,7 +19,8 @@ The following features are planned for this project
 * Connection monitoring
 * automatic refresh on file change post connection
 * verifying loaded ROM is for FE
-* Flags displayed
+* Flags displayed - flags obtained but never displayed
+* Version displayed - version obtained but never displayed
 * Some flag annotations
 
 ## Possibly Added to the Roadmap at a future time but currently out of scope

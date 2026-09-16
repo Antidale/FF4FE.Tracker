@@ -7,7 +7,7 @@
 <button @onclick="Connect" class="nf @ConnectionClass"></button>
 
 
-@if (_connectedDevices != null && string.IsNullOrEmpty(AppState.Uri))
+@* @if (_connectedDevices != null && string.IsNullOrEmpty(AppState.Uri))
 {
     <div>Select Device:</div>
     <select @onchange="SelectedDeviceChanged">
@@ -17,7 +17,7 @@
             <option value="@device">@device.DisplayName</option>
         }
     </select>
-}
+} *@
 
 <p>@ErrorMessage</p>
 
@@ -25,7 +25,7 @@
     [CascadingParameter]
     CascadingAppState AppState { get; set; } = new();
     private string? ErrorMessage;
-    private List<Device>? _connectedDevices;
+    @* private List<Device>? _connectedDevices; *@
     string ConnectionClass = "nf-md-power_plug_off";
 
     public async Task Connect()
