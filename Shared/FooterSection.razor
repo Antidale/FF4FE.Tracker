@@ -1,0 +1,16 @@
+Currently Playing: @AppState.RomFileName
+
+@if (!string.IsNullOrWhiteSpace(AppState.ConnectionError))
+{
+    @AppState.ConnectionError
+}
+else
+{
+
+}
+
+
+@code {
+    [CascadingParameter]
+    public CascadingAppState AppState { get; set; } = new();
+}

@@ -1,4 +1,6 @@
 ﻿@using FeTracker.Common.RazorComponents
+@using FeTracker.Sni.Services
+@using Grpc.Net.Client
 
 <CascadingValue Value="this">
     @ChildContent
@@ -80,4 +82,12 @@
         get;
         set { field = value; StateHasChanged(); }
     } = string.Empty;
+
+    public string ConnectionError
+    {
+        get;
+        set { field = value; StateHasChanged(); }
+    } = string.Empty;
+
+    public GrpcChannel? Channel => GrpcChannelService.GetChannel(Port, Host, true);
 }
