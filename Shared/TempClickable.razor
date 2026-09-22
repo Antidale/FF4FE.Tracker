@@ -1,0 +1,22 @@
+﻿@using FeTracker.Common.Interfaces
+@using FeTracker.Common.RazorComponents
+@inject TrackerNotifier trackerNotifier
+
+<img src="@CombinedPath" @onclick=@HandleClick class="@Icon?.Class">
+
+@code {
+    [CascadingParameter]
+    public string IconFolderPath { get; set; } = "Icons/";
+
+    [Parameter]
+    public IClickable? Icon { get; set; }
+
+    private string CombinedPath => Path.Combine(IconFolderPath, Icon?.FileName ?? string.Empty);
+
+    private void HandleClick()
+    {
+        Icon?.HandleClick();
+        StateHasChanged();
+        @* trackerNotifier.NotifyPropertyChanged(new(NotificationConstants.KeyItemFound, null)); *@
+    }
+}

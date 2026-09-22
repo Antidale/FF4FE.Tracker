@@ -1,0 +1,15 @@
+@using FeTracker.Common.Enums
+@using FeTracker.Common.RazorComponents
+@inject TrackerNotifier notifier
+
+<button @onclick="@CallReset">
+    Reset Tracker
+</button>
+
+@code {
+    public void CallReset()
+    {
+        notifier.PublishEvent(TrackerEvent.Reset, new(TrackerEvent.Reset.ToString(), true));
+        StateHasChanged();
+    }
+}

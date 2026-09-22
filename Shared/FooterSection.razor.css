@@ -1,0 +1,5 @@
+.rom-name {
+    inline-size: 80ch;
+    text-wrap: wrap;
+    overflow-wrap: break-word;
+}

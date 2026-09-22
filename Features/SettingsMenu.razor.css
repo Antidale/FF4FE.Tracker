@@ -1,0 +1,69 @@
+#settings-menu {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+}
+
+.settings-button {
+    background-color: var(--background);
+    margin-top: .5px;
+    padding: 5px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    width: 3rem;
+    line-height: 1.1;
+    color: var(--color);
+    border-radius: 10px;
+    border: 1px solid;
+}
+
+dialog {
+    color: var(--color);
+    background-color: var(--background);
+}
+
+.input-grid {
+    display: grid;
+    gap: 1rem;
+    border: 1px solid var(--color);
+    margin: 2rem auto;
+    background-color: var(--background-alt);
+
+    padding: 20px;
+}
+
+
+
+dialog::backdrop {
+    backdrop-filter: blur(5px);
+}
+
+#settings-popover>div {
+    width: 60vw;
+    display: flex;
+    flex-direction: column;
+}
+
+.button-row {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+
+    button {
+        width: 5rem;
+        height: 2rem;
+        margin-left: auto;
+        margin-right: auto;
+        margin-bottom: 2rem;
+    }
+}
+
+h2,
+p {
+    text-align: center;
+}
+
+p {
+    padding-left: 2rem;
+    padding-right: 2rem;
+}

@@ -1,0 +1,34 @@
+<section id="settings-menu">
+    <button popovertarget="settings-popover" class="settings-button nf nf-cod-settings_gear"></button>
+    <dialog popover id="settings-popover" class="">
+        <div>
+            <div class="text-header">
+                <h2>Settings</h2>
+                <p>do settings things</p>
+            </div>
+            <section class="input-grid">
+                <section class="grid-row">
+                    <div>Host</div>
+                    <InputText @bind-Value="@AppState.Host"></InputText>
+                </section>
+                <section class="grid-row">
+                    <div>Host</div>
+                    <InputNumber @bind-Value="@AppState.Port" step="1"></InputNumber>
+                </section>
+                <section class="grid-row">
+                    <div>Background Color</div>
+                    <InputText @bind-Value="@AppState.BackgroundColor"></InputText>
+                </section>
+                <section class="grid-row">
+                    <div>Text Color</div>
+                    <InputText @bind-Value="@AppState.TextColor"></InputText>
+                </section>
+            </section>
+        </div>
+    </dialog>
+</section>
+
+@code {
+    [CascadingParameter]
+    CascadingAppState AppState { get; set; } = new();
+}

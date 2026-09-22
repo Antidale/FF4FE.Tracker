@@ -1,0 +1,24 @@
+﻿@using FF4FE.Tracker.Shared;
+@using FeTracker.Common.RazorComponents;
+@using FF4FE.Tracker.Features;
+
+@page "/"
+
+<PageTitle>AntiTracker</PageTitle>
+<HeaderSection />
+<div class="container">
+    <section class="metadata">
+        <Metadata />
+    </section>
+
+    <section class="tracker">
+        <KeyItemsTracker HideReset="true" />
+        @* <ResetButton /> *@
+    </section>
+</div>
+<FooterSection />
+
+
+@code {
+
+}

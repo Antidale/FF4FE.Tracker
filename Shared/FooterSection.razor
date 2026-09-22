@@ -1,0 +1,14 @@
+@if (!string.IsNullOrWhiteSpace(AppState.RomFileName))
+{
+    <p class="rom-name">Currently Playing: @AppState.RomFileName.Split("/").Last()</p>
+}
+
+@if (!string.IsNullOrWhiteSpace(AppState.ConnectionError))
+{
+    @AppState.ConnectionError
+}
+
+@code {
+    [CascadingParameter]
+    public CascadingAppState AppState { get; set; } = new();
+}

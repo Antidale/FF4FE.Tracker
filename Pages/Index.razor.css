@@ -1,0 +1,5 @@
+.container {
+    --tracker-size: 140px;
+    display: grid;
+    grid-template-columns: calc(90dvw - var(--tracker-size)) var(--tracker-size);
+}
