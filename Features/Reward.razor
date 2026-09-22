@@ -14,7 +14,7 @@
         else
         {
             <div>
-                @string.Format("{0}:  ", reward.TaskQuantity)<img src="@CombinedPath" width="16px" height="16px" />
+                @string.Format("{0}:  ", reward.TaskQuantity)<img src="@CombinedPath" width="12px" height="14px" />
                 @reward.Item
             </div>
         }
@@ -49,6 +49,11 @@
         if (!string.IsNullOrWhiteSpace(objectiveReward.Description))
         {
             reward = ObjectiveDictionary.GetReward(objectiveReward.Description);
+
+            if (reward.Item == "the game")
+            {
+                reward = reward with { Item = "Win Game" };
+            }
         }
         
         base.OnParametersSet();
