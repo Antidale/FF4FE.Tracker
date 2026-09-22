@@ -8,18 +8,25 @@
 @using static sni.DeviceMemory
 @inject TrackerNotifier trackerNotifier
 
-<ul>
-    @foreach (var obj in _objectives)
-    {
-        <Objective ObjectiveText="@obj" />
-    }
+@if (_objectives.Any())
+{
+    <ul>
+        @foreach (var obj in _objectives)
+        {
+            <Objective ObjectiveText="@obj" />
+        }
+    
+    </ul>
+}
+else
+{
     <section class="group-grid">
         @foreach (var group in _groups)
         {
             <V5ObjectiveGroup Group="@group" />
         }
     </section>
-</ul>
+}
 
 @code {
     [CascadingParameter]
