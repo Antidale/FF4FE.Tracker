@@ -1,5 +1,4 @@
-﻿@using FeTracker.Common.Constants
-@using FeTracker.Common.Interfaces
+﻿@using FeTracker.Common.Interfaces
 @using FeTracker.Common.RazorComponents
 @inject TrackerNotifier trackerNotifier
 
@@ -18,6 +17,6 @@
     {
         Icon?.HandleClick();
         StateHasChanged();
-        trackerNotifier.NotifyPropertyChanged(new(NotificationConstants.KeyItemFound, null));
+        @* trackerNotifier.NotifyPropertyChanged(new(NotificationConstants.KeyItemFound, null)); *@
     }
 }

@@ -1,5 +1,4 @@
-﻿@using FeTracker.Common.Constants
-@using FeTracker.Common.Enums
+﻿@using FeTracker.Common.Enums
 @using FeTracker.Common.Icons
 @using FeTracker.Common.RazorComponents
 @inject TrackerNotifier notifier
@@ -33,7 +32,7 @@
     protected override void OnInitialized()
     {
         Icons.AddRange(Enum.GetValues<KeyItem>().Select(x => new KeyItemIcon(x)));
-        notifier.RegisterCallback(new(this, HandleNotification));
+        @* notifier.RegisterCallback(new(this, HandleNotification)); *@
         base.OnInitialized();
     }
 
@@ -45,11 +44,11 @@
             Icons.Add(new KeyItemIcon(icon));
         }
         StateHasChanged();
-        UpdateCount();
+        @* UpdateCount(); *@
 
     }
 
-    private void HandleNotification(StatePropertyChangedArgs args)
+    @* private void HandleNotification(StatePropertyChangedArgs args)
     {
         switch (args.PropertyName)
         {
@@ -62,12 +61,12 @@
 
         }
         StateHasChanged();
-    }
+    } *@
 
-    private void UpdateCount()
+    @* private void UpdateCount()
     {
         Count = notifier.Version.StartsWith("v5.")
         ? Icons.Count(x => x.State != IconState.Gray)
         : Icons.Count(x => x.Icon != KeyItem.Pass && x.State != IconState.Gray);
-    }
+    } *@
 }

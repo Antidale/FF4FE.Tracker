@@ -1,36 +1,25 @@
 ﻿@using System.Collections;
 @using System.Text
 @using System.Text.Json;
-@using FF4FE.Tracker.Models;
-@using FeTracker.Common.Constants
 @using FeTracker.Common.Enums
-@using FeTracker.Common.RazorComponents
-@using FeTracker.Sni.Constants
-@using FeTracker.Sni.Extensions
-@using FeTracker.Sni.Services
-@using global::Tracker.Features
+@using FeTracker.Sni.Classes
+@using FeTracker.Sni.Models
 @using sni;
-
-@inject DeviceService DeviceService
+@using static sni.DeviceMemory
 @inject TrackerNotifier trackerNotifier
 
-@if (!string.IsNullOrWhiteSpace(AppState.Uri))
-{
-    @if (!string.IsNullOrEmpty(AppState.DeviceName) && string.IsNullOrEmpty(_flags))
+<ul>
+    @foreach (var obj in _objectives)
     {
-        <button @onclick="GetMetadataAsync">Get Metadata</button>
+        <Objective ObjectiveText="@obj" />
     }
-
-    @if (_objectives.Any())
-    {
-        <ul>
-            @foreach (var obj in _objectives)
-            {
-                <Objective ObjectiveText="@obj" />
-            }
-        </ul>
-    }
-}
+    <section class="group-grid">
+        @foreach (var group in _groups)
+        {
+            <V5ObjectiveGroup Group="@group" />
+        }
+    </section>
+</ul>
 
 @code {
     [CascadingParameter]
@@ -38,68 +27,139 @@
 
     private string _flags = string.Empty;
     private List<string> _objectives = [];
-    private Dictionary<KeyItem, bool> _keyItems = Enum.GetValues<KeyItem>().Cast<KeyItem>().ToDictionary(x => x, x =>
-false);
-    FieldsResponse? fieldsResponse = null;
+    private List<ObjectiveGroup> _groups = [];
 
     protected override void OnInitialized()
     {
-        trackerNotifier.RegisterCallback(new(this, ResetMetadata));
+        trackerNotifier.RegisterCallback(TrackerEvent.Reset, new(this, GetMetadataAsync));
+        trackerNotifier.RegisterCallback(TrackerEvent.RomUpdated, new(this, GetMetadataAsync));
         base.OnInitialized();
     }
 
-    private async Task GetMetadataAsync()
+    private async Task GetMetadataAsync(StatePropertyChangedArgs args)
     {
-        if (AppState.RomFileName.Contains(".bin") || !string.IsNullOrWhiteSpace(AppState.ConnectionError))
+        Console.WriteLine(args.PropertyName);
+        if (!AppState.IsFeHeader
+            || AppState.RomFileName.Contains(".bin")
+            || !string.IsNullOrWhiteSpace(AppState.ConnectionError))
         {
             return;
         }
 
-        var memoryClient = new DeviceMemory.DeviceMemoryClient(AppState.Channel);
-
-        var response = await memoryClient.ReadByMemoryAddressAsync(AddressData.Metadata, AppState.Uri);
-
-        if (response.Data is null || !response.Success)
-            return;
+        if (args.PropertyName == nameof(AppState.RomFileName)
+           || args.PropertyName == nameof(AppState.RomHeader00FFB0)
+           || args.PropertyName == TrackerEvent.Reset.ToString())
+        {
+            _flags = "";
+            _objectives = [];
+            Console.WriteLine("cleared flags/objectives");
+        }
 
         try
         {
-            var jsonDocLength = BitConverter.ToUInt32(response.Data.Response.Data.ToArray(), 0);
-
-            var docString = await memoryClient.SingleReadAsync(new SingleReadMemoryRequest
+            var memoryClient = new DeviceMemory.DeviceMemoryClient(AppState.Channel);
+            var jsonDocLength = await GetMetadataDocLength(memoryClient);
+            if (!jsonDocLength.Success)
             {
-                Request = new ReadMemoryRequest
-                {
-                    RequestAddress = AddressData.JsonDocument.Address,
-                    RequestAddressSpace = AddressSpace.FxPakPro,
-                    RequestMemoryMapping = MemoryMapping.Unknown,
-                    Size = jsonDocLength
-                },
-                Uri = AppState.Uri,
-            });
-
-            var stuff = docString.Response.Data.ToStringUtf8();
-            var metadata = JsonSerializer.Deserialize<SeedMetadata>(docString.Response.Data.ToStringUtf8());
-            Console.WriteLine(metadata?.Version ?? "no version found");
-
-            if (!string.IsNullOrWhiteSpace(metadata?.Version) && metadata?.Version == "5.0.4")
-            {
-                Console.WriteLine("unzip it!");
+                //Given we're looking for the fe header, this shouldn't happen
+                AppState.ConnectionError = "Unable to get metadata. Are you sure you have an FE seed loaded?";
             }
 
-            _objectives = metadata?.Objectives ?? _objectives;
-            _flags = metadata?.Flags ?? "no flags found. . . sadness";
+            var docString = await memoryClient.ReadByMemoryAddressAsync(AddressData.JsonDocument, AppState.Uri, jsonDocLength.Data);
+
+            if (!docString.Success || docString.Data is null) { return; }
+
+            var stuff = docString.Data.Response.Data.ToStringUtf8();
+            var metadata = JsonSerializer.Deserialize<SeedMetadata>(docString.Data.Response.Data.ToStringUtf8());
+
+            if (metadata is null) { return; }
+
+            AppState.Version = metadata.Version;
+
+            if (metadata.Version.StartsWith("v5"))
+            {
+                try
+                {
+                    _objectives = [];
+                    Console.WriteLine(metadata.Objectives);
+                    _groups = JsonSerializer.Deserialize<List<ObjectiveGroup>>(metadata.Objectives) ?? _groups;
+                    foreach (var group in _groups)
+                    {
+                        foreach (var task in group.Tasks)
+                        {
+                            if (ObjectiveDictionary.TryGetObjectiveText(task.Objective, task.Threshold, out var returnValue))
+                            {
+                                task.Objective = returnValue;
+                            }
+                        }
+
+                        foreach (var reward in group.Rewards)
+                        {
+                            var thingy = ObjectiveDictionary.GetReward(reward.Description);
+                            thingy.ToString();
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(metadata.Objectives);
+                    AppState.ConnectionError = "Couldn't Parse v5 Objective correctly";
+                }
+
+
+                //add in logic for handling compressed objectives
+            }
+            else if (metadata.Version.StartsWith("v0.4") || metadata.Version.StartsWith("v4."))
+            {
+                _groups = [];
+                _objectives = JsonSerializer.Deserialize<List<string>>(metadata.Objectives) ?? _objectives;
+            }
+
+            @* //TODO: add eventual check for compressed metadata
+            if (true)
+            {
+                
+            } *@
+
+            _flags = metadata.Flags ?? "no flags found. . . sadness";
             if (string.IsNullOrWhiteSpace(_flags))
             {
                 _flags = "no flags found.... sadness";
             }
+            Console.WriteLine("Set objectives");
+            StateHasChanged();
         }
         catch (Exception ex)
         {
             AppState.ConnectionError = "Error while trying to get metadata. Make sure you have an FE rom loaded.";
             Console.WriteLine(ex.Message);
         }
+    }
 
+    private async Task<Response<UInt32>> GetMetadataDocLength(DeviceMemoryClient client)
+    {
+        var response = await client.ReadByMemoryAddressAsync(AddressData.Metadata, AppState.Uri);
+
+        if (response.Data is null || !response.Success)
+        {
+            return Response<UInt32>.SetError(response.ErrorMessage);
+        }
+
+        try
+        {
+            var jsonDocLength = BitConverter.ToUInt32(response.Data.Response.Data.ToArray(), 0);
+            if (jsonDocLength == 0)
+            {
+                return Response<UInt32>.SetError("Unexpected metadata document length of 0 returned");
+            }
+
+            return Response<UInt32>.SetSuccess(jsonDocLength);
+        }
+        catch (Exception ex)
+        {
+            return Response<UInt32>.SetError(ex.Message);
+        }
     }
 
     public async Task GetFoundKeyItems()
@@ -144,11 +204,8 @@ false);
 
     private void ResetMetadata(StatePropertyChangedArgs args)
     {
-        if (args.PropertyName != NotificationConstants.Reset) return;
         _flags = string.Empty;
         _objectives = [];
-        fieldsResponse = null;
-        AppState.RomFileName = string.Empty;
         AppState.ConnectionError = string.Empty;
         StateHasChanged();
     }

@@ -1,0 +1,36 @@
+@using FeTracker.Sni.Models
+
+<section class="objective-group">
+    <h2>@Group.Name</h2>
+    <div class="border">
+        <div class="grid-container">
+            @foreach (var task in Group.Tasks)
+            {
+                <InlineObjective ObjectiveText="@task.Objective" />
+            }
+        </div>
+        
+        
+
+        @if (Group.Rewards.Any())
+        {
+            <div class="grid-container">
+                @foreach (var reward in Group.Rewards)
+                {
+                    <Reward objectiveReward="reward" />
+                }
+            </div>
+        }
+    </div>
+    
+</section>
+
+@code {
+    [Parameter]
+    public ObjectiveGroup Group { get; set; } = new();
+
+    string TasksHeader => $"Do {Suffix(Group.Tasks.Count)}";
+    string RewardsHeader => $"For {Suffix(Group.Rewards.Count)}";
+
+    string Suffix(int count) => count > 1 ? "These" : "This";
+}

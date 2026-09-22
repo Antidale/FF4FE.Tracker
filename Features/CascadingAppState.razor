@@ -1,6 +1,10 @@
-﻿@using FeTracker.Common.RazorComponents
+﻿@using System.Text
+@using FeTracker.Common.RazorComponents
+@using FeTracker.Common.Enums
 @using FeTracker.Sni.Services
+@using Google.Protobuf
 @using Grpc.Net.Client
+@inject TrackerNotifier notifier;
 
 <CascadingValue Value="this">
     @ChildContent
@@ -9,33 +13,6 @@
 @code {
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
-
-    private List<EventCallback<StatePropertyChangedArgs>> Callbacks
-    = new List<EventCallback<StatePropertyChangedArgs>>();
-
-    // Each component will register a callback
-    public void RegisterCallback(EventCallback<StatePropertyChangedArgs> callback)
-    {
-        // Only add if we have not already registered this callback
-        if (!Callbacks.Contains(callback))
-        {
-            Callbacks.Add(callback);
-        }
-    }
-
-    private void NotifyPropertyChanged(StatePropertyChangedArgs args)
-    {
-        foreach (var callback in Callbacks)
-        {
-            // Ignore exceptions due to dangling references
-            try
-            {
-                // Invoke the callback
-                callback.InvokeAsync(args);
-            }
-            catch { }
-        }
-    }
 
     public string Host
     {
@@ -62,7 +39,17 @@
     public string RomFileName
     {
         get;
-        set { field = value; StateHasChanged(); }
+        set
+        {
+            if (string.Equals(field, value)) { return; }
+            field = value;
+            StateHasChanged();
+            if (IsFeHeader)
+            {
+                notifier.PublishEvent(TrackerEvent.RomUpdated, new(nameof(RomFileName), value));
+            }
+
+        }
     } = string.Empty;
 
     public string DeviceName
@@ -90,4 +77,30 @@
     } = string.Empty;
 
     public GrpcChannel? Channel => GrpcChannelService.GetChannel(Port, Host, true);
+
+    public ByteString RomHeader00FFB0
+    {
+        get;
+        set
+        {
+            if (field == value) { return; }
+            field = value;
+        }
+    } = ByteString.Empty;
+
+    public bool IsFeHeader
+    {
+        get
+        {
+            if (RomHeader00FFB0.Length < 0x31) return false;
+            var evalString = Encoding.UTF8.GetString(RomHeader00FFB0.Span.Slice(0x10, 21));
+            return evalString.Equals("FFIV: FREE ENTERPRISE");
+        }
+    }
+
+    public string Version
+    {
+        get;
+        set { field = value; }
+    } = string.Empty;
 }

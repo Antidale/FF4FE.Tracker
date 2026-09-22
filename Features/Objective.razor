@@ -1,15 +1,26 @@
+@inject TrackerNotifier notifier
+
 <li>
     <input id="@ObjectiveText" type="checkbox" />
     <label for="@ObjectiveText">@ObjectiveText</label>
 </li>
 @code {
     /*
-        also needs to know if objective is required
-        could learn/be able to determine what KI are required to use it
-        Parent component should list how many are overall required
-            5.0 this swaps to the rewards section
+    could know if objective is required
+    could learn/be able to determine what KI are required to use it
+    Parent component should list how many are overall required
     */
     [Parameter]
     public required string ObjectiveText { get; init; }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+    }
+
+    private void HandleNotification()
+    {
+        
+    }
 
 }

@@ -1,0 +1,13 @@
+@inherits KeyItemsTracker
+
+    @WrapInRenderFragment()
+
+
+@code {
+    private RenderFragment WrapInRenderFragment() => builder => base.BuildRenderTree(builder); 
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+    }
+    
+}

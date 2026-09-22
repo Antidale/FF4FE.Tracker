@@ -10,3 +10,8 @@ input:checked+label {
     text-decoration: line-through;
     color: slategray
 }
+
+.group-grid {
+    display: grid;
+    grid-template-columns: auto;
+}

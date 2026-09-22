@@ -1,4 +1,4 @@
-@using FeTracker.Common.Constants
+@using FeTracker.Common.Enums
 @using FeTracker.Common.RazorComponents
 @inject TrackerNotifier notifier
 
@@ -9,7 +9,7 @@
 @code {
     public void CallReset()
     {
-        notifier.NotifyPropertyChanged(new(NotificationConstants.Reset, true));
+        notifier.PublishEvent(TrackerEvent.Reset, new(TrackerEvent.Reset.ToString(), true));
         StateHasChanged();
     }
 }
