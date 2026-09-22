@@ -49,6 +49,11 @@
         if (!string.IsNullOrWhiteSpace(objectiveReward.Description))
         {
             reward = ObjectiveDictionary.GetReward(objectiveReward.Description);
+
+            if (reward.Item == "the game")
+            {
+                reward = reward with { Item = "Win Game" };
+            }
         }
         
         base.OnParametersSet();
