@@ -1,194 +1,188 @@
 ﻿@using System.Collections;
 @using System.Text
 @using System.Text.Json;
-@using FF4FE.Tracker.Models;
-@using FF4FE.Tracker.Services;
 @using FeTracker.Common.Enums
+@using FeTracker.Sni.Classes
+@using FeTracker.Sni.Models
 @using sni;
-@using static sni.DevicesResponse.Types;
-@inject DeviceService DeviceService
+@using static sni.DeviceMemory
+@inject TrackerNotifier trackerNotifier
 
-<h3>Get Metadata</h3>
-
-<p>@ErrorMessage</p>
-
-@if (string.IsNullOrEmpty(_uri))
+@if (_objectives.Any())
 {
-    <button @onclick="Connect">Connect</button>
-}
-
-@if (!string.IsNullOrEmpty(_displayName))
-{
-    <button @onclick="GetMetadataAsync">Get Metadata</button>
-}
-
-@if (_connectedDevices != null && string.IsNullOrEmpty(_uri))
-{
-    <div>Select Device:</div>
-    <select @onchange="SelectedDeviceChanged">
-        <option value="" disabled selected> -- Select -- </option>
-        @foreach (var device in _connectedDevices)
+    <ul>
+        @foreach (var obj in _objectives)
         {
-            <option value="@device">@device.DisplayName</option>
+            <Objective ObjectiveText="@obj" />
         }
-    </select>
+    
+    </ul>
 }
-
-@if (!string.IsNullOrEmpty(_displayName))
+else
 {
-    <p>Connected to: @_displayName</p>
+    <section class="group-grid">
+        @foreach (var group in _groups)
+        {
+            <V5ObjectiveGroup Group="@group" />
+        }
+    </section>
 }
-
-@if (!string.IsNullOrWhiteSpace(_objectives))
-{
-    <div>@_objectives</div>
-}
-
-@if (!string.IsNullOrEmpty(_flags))
-{
-    <p>@_flags</p>
-}
-
-@foreach (var thing in _testKi)
-{
-    <p>@thing</p>
-}
-
 
 @code {
-    private string? _uri;
-    private string? _displayName;
-    private string? ErrorMessage;
-    private List<Device>? _connectedDevices;
-    private string _flags = string.Empty;
-    private string _objectives = string.Empty;
-    private Dictionary<KeyItem, bool> _keyItems = Enum.GetValues<KeyItem>().Cast<KeyItem>().ToDictionary(x => x, x =>
-false);
-    private List<string> _testKi = [];
+    [CascadingParameter]
+    CascadingAppState AppState { get; set; } = new();
 
-    public async Task Connect()
+    private string _flags = string.Empty;
+    private List<string> _objectives = [];
+    private List<ObjectiveGroup> _groups = [];
+
+    protected override void OnInitialized()
     {
-        DevicesResponse? connectedDevices = new DevicesResponse();
+        trackerNotifier.RegisterCallback(TrackerEvent.Reset, new(this, GetMetadataAsync));
+        trackerNotifier.RegisterCallback(TrackerEvent.RomUpdated, new(this, GetMetadataAsync));
+        base.OnInitialized();
+    }
+
+    private async Task GetMetadataAsync(StatePropertyChangedArgs args)
+    {
+        Console.WriteLine(args.PropertyName);
+        if (!AppState.IsFeHeader
+            || AppState.RomFileName.Contains(".bin")
+            || !string.IsNullOrWhiteSpace(AppState.ConnectionError))
+        {
+            return;
+        }
+
+        if (args.PropertyName == nameof(AppState.RomFileName)
+           || args.PropertyName == nameof(AppState.RomHeader00FFB0)
+           || args.PropertyName == TrackerEvent.Reset.ToString())
+        {
+            _flags = "";
+            _objectives = [];
+            Console.WriteLine("cleared flags/objectives");
+        }
 
         try
         {
-            connectedDevices = await DeviceService.GetDevicesListAsync();
-        }
-        catch (NullReferenceException)
-        {
-            ErrorMessage = "Unable to connect to SNI. Please make sure it's running";
+            var memoryClient = new DeviceMemory.DeviceMemoryClient(AppState.Channel);
+            var jsonDocLength = await GetMetadataDocLength(memoryClient);
+            if (!jsonDocLength.Success)
+            {
+                //Given we're looking for the fe header, this shouldn't happen
+                AppState.ConnectionError = "Unable to get metadata. Are you sure you have an FE seed loaded?";
+            }
+
+            var docString = await memoryClient.ReadByMemoryAddressAsync(AddressData.JsonDocument, AppState.Uri, jsonDocLength.Data);
+
+            if (!docString.Success || docString.Data is null) { return; }
+
+            var stuff = docString.Data.Response.Data.ToStringUtf8();
+            var metadata = JsonSerializer.Deserialize<SeedMetadata>(docString.Data.Response.Data.ToStringUtf8());
+
+            if (metadata is null) { return; }
+
+            AppState.Version = metadata.Version;
+
+            if (metadata.Version.StartsWith("v5"))
+            {
+                try
+                {
+                    _objectives = [];
+                    Console.WriteLine(metadata.Objectives);
+                    _groups = JsonSerializer.Deserialize<List<ObjectiveGroup>>(metadata.Objectives) ?? _groups;
+                    foreach (var group in _groups)
+                    {
+                        foreach (var task in group.Tasks)
+                        {
+                            if (ObjectiveDictionary.TryGetObjectiveText(task.Objective, task.Threshold, out var returnValue))
+                            {
+                                task.Objective = returnValue;
+                            }
+                        }
+
+                        foreach (var reward in group.Rewards)
+                        {
+                            var thingy = ObjectiveDictionary.GetReward(reward.Description);
+                            thingy.ToString();
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(metadata.Objectives);
+                    AppState.ConnectionError = "Couldn't Parse v5 Objective correctly";
+                }
+
+
+                //add in logic for handling compressed objectives
+            }
+            else if (metadata.Version.StartsWith("v0.4") || metadata.Version.StartsWith("v4."))
+            {
+                _groups = [];
+                _objectives = JsonSerializer.Deserialize<List<string>>(metadata.Objectives) ?? _objectives;
+            }
+
+            @* //TODO: add eventual check for compressed metadata
+            if (true)
+            {
+                
+            } *@
+
+            _flags = metadata.Flags ?? "no flags found. . . sadness";
+            if (string.IsNullOrWhiteSpace(_flags))
+            {
+                _flags = "no flags found.... sadness";
+            }
+            Console.WriteLine("Set objectives");
+            StateHasChanged();
         }
         catch (Exception ex)
         {
-            ErrorMessage = ex.Message;
-        }
-
-        if (connectedDevices?.Devices.Count == 1)
-        {
-            var connectedDevice = connectedDevices.Devices.First();
-            _uri = connectedDevice.Uri;
-            _displayName = connectedDevice.DisplayName;
-        }
-        else if (connectedDevices?.Devices.Count > 1)
-        {
-            _connectedDevices = connectedDevices.Devices.ToList();
-        }
-        else
-        {
-            ErrorMessage = "No Devices found";
+            AppState.ConnectionError = "Error while trying to get metadata. Make sure you have an FE rom loaded.";
+            Console.WriteLine(ex.Message);
         }
     }
 
-    private async void SelectedDeviceChanged(ChangeEventArgs e)
+    private async Task<Response<UInt32>> GetMetadataDocLength(DeviceMemoryClient client)
     {
-        if (e is not null && e.Value is not null)
-        {
-            if (e.Value is Device)
-            {
-                var device = (Device)e.Value;
-                _uri = device.Uri;
-                _displayName = device.DisplayName;
-                await GetMetadataAsync();
-            }
-        }
-    }
+        var response = await client.ReadByMemoryAddressAsync(AddressData.Metadata, AppState.Uri);
 
-    private async Task GetMetadataAsync()
-    {
-        var readMemoryRequest = new SingleReadMemoryRequest
+        if (response.Data is null || !response.Success)
         {
-            Request = new ReadMemoryRequest
-            {
-                RequestAddress = 0x1FF000,
-                RequestAddressSpace = AddressSpace.FxPakPro,
-                RequestMemoryMapping = MemoryMapping.Unknown,
-                Size = 4
-            },
-            Uri = _uri,
-        };
-
-        SingleReadMemoryResponse response = new SingleReadMemoryResponse();
-        var channel = GrpcChannelService.GetGrpcChannel();
-        var memoryClient = new DeviceMemory.DeviceMemoryClient(channel);
-
-        for (var count = 0; count <= 10; count++)
-        {
-            try
-            {
-                response = await memoryClient.SingleReadAsync(readMemoryRequest, deadline: DateTime.UtcNow.AddMilliseconds(100));
-            }
-            catch (Exception)
-            {
-                Thread.Sleep(100);
-            }
+            return Response<UInt32>.SetError(response.ErrorMessage);
         }
 
-        var jsonDocLength = BitConverter.ToInt32(response.Response.Data.ToArray(), 0);
-
-        var docString = await memoryClient.SingleReadAsync(new SingleReadMemoryRequest
+        try
         {
-            Request = new ReadMemoryRequest
+            var jsonDocLength = BitConverter.ToUInt32(response.Data.Response.Data.ToArray(), 0);
+            if (jsonDocLength == 0)
             {
-                RequestAddress = 0x1FF004,
-                RequestAddressSpace = AddressSpace.FxPakPro,
-                RequestMemoryMapping = MemoryMapping.Unknown,
-                Size = (uint)jsonDocLength
-            },
-            Uri = _uri,
-        });
+                return Response<UInt32>.SetError("Unexpected metadata document length of 0 returned");
+            }
 
-        var stuff = docString.Response.Data.ToStringUtf8();
-        var metadata = JsonSerializer.Deserialize<SeedMetadata>(docString.Response.Data.ToStringUtf8());
-        Console.WriteLine(metadata?.Version ?? "no version found");
-
-        if (!string.IsNullOrWhiteSpace(metadata?.Version) && metadata?.Version == "5.0.4")
-        {
-            Console.WriteLine("unzip it!");
+            return Response<UInt32>.SetSuccess(jsonDocLength);
         }
-
-        //_objectives = metadata?.Objectives ?? _objectives;
-        _flags = metadata?.Flags ?? "no flags found. . . sadness";
-        if (string.IsNullOrWhiteSpace(_flags))
+        catch (Exception ex)
         {
-            _flags = "no flags found.... sadness";
+            return Response<UInt32>.SetError(ex.Message);
         }
     }
 
     public async Task GetFoundKeyItems()
     {
-        var channel = GrpcChannelService.GetGrpcChannel();
+        var channel = GrpcChannelService.GetChannel(AppState.Port, AppState.Host, true);
         var memoryClient = new DeviceMemory.DeviceMemoryClient(channel);
-
         var readMemoryRequest = new SingleReadMemoryRequest
         {
             Request = new ReadMemoryRequest
             {
-                RequestAddress = 0xF51500,
+                RequestAddress = AddressData.FOUND_KEY_ITEMS.Address,
                 RequestAddressSpace = AddressSpace.FxPakPro,
                 RequestMemoryMapping = MemoryMapping.LoRom,
-                Size = 3
+                Size = AddressData.FOUND_KEY_ITEMS.Size
             },
-            Uri = _uri,
+            Uri = AppState.Uri,
         };
 
         var response = await memoryClient.SingleReadAsync(readMemoryRequest);
@@ -197,20 +191,29 @@ false);
         var stuff = new BitArray(reponseData);
 
         var stringBuilder = new StringBuilder();
-        _testKi.Add("Found KI");
+        @* _testKi.Add("Found KI");
         for (var i = 0; i < 17; i++)
         {
             _testKi.Add($"Index {(KeyItem)i}, Value: {stuff[i]}");
-        }
+        } *@
 
-        readMemoryRequest.Request.RequestAddress = 0xF51503;
+        readMemoryRequest.Request.RequestAddress = AddressData.USED_KEY_ITEMS.Address;
+        readMemoryRequest.Request.Size = AddressData.USED_KEY_ITEMS.Size;
         response = await memoryClient.SingleReadAsync(readMemoryRequest);
         reponseData = response.Response.Data.ToByteArray();
         stuff = new BitArray(reponseData);
-        _testKi.Add("Used KI");
+        @* _testKi.Add("Used KI");
         for (var i = 0; i < 17; i++)
         {
             _testKi.Add($"Index {(KeyItem)i}, Value: {stuff[i]}");
-        }
+        } *@
+    }
+
+    private void ResetMetadata(StatePropertyChangedArgs args)
+    {
+        _flags = string.Empty;
+        _objectives = [];
+        AppState.ConnectionError = string.Empty;
+        StateHasChanged();
     }
 }

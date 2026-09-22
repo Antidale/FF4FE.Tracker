@@ -1,0 +1,62 @@
+@using FeTracker.Sni.Classes
+@using FeTracker.Sni.Models
+@inject TrackerNotifier notifier
+
+@if (reward is not null)
+{
+    <div>
+        @if (string.IsNullOrWhiteSpace(CombinedPath))
+        {
+            <div>
+                @string.Format("{0}: {1}", reward.TaskQuantity, reward.Item)
+            </div>
+        }
+        else
+        {
+            <div>
+                @string.Format("{0}:  ", reward.TaskQuantity)<img src="@CombinedPath" width="16px" height="16px" />
+                @reward.Item
+            </div>
+        }
+    </div>
+}
+
+@code {
+    /*
+    also needs to know if objective is required
+    could learn/be able to determine what KI are required to use it
+    Parent component should list how many are overall required
+            5.0 this swaps to the rewards section
+    */
+
+    [CascadingParameter]
+    public string IconFolderPath { get; set; } = "Icons/";
+
+    [Parameter]
+    public required ObjectiveReward objectiveReward { get; set; }
+    FeTracker.Sni.Models.Reward? reward;
+    string CombinedPath => !string.IsNullOrWhiteSpace(reward?.Icon ?? string.Empty)
+        ? Path.Combine(IconFolderPath, $"{reward?.Icon}.gif" ?? string.Empty)
+        : string.Empty;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (!string.IsNullOrWhiteSpace(objectiveReward.Description))
+        {
+            reward = ObjectiveDictionary.GetReward(objectiveReward.Description);
+        }
+        
+        base.OnParametersSet();
+    }
+
+    private void HandleNotification()
+    {
+        
+    }
+
+}

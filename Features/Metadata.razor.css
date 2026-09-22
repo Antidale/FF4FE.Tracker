@@ -1,0 +1,17 @@
+ul {
+    list-style: none;
+}
+
+li input {
+    display: none;
+}
+
+input:checked+label {
+    text-decoration: line-through;
+    color: slategray
+}
+
+.group-grid {
+    display: grid;
+    grid-template-columns: auto;
+}

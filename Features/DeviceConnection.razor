@@ -1,18 +1,17 @@
-﻿@using FF4FE.Tracker.Services;
-@using sni;
-@using static sni.DevicesResponse.Types;
+﻿@using FeTracker.Sni.Extensions
+@using FeTracker.Sni.Services
+@using sni
+@using static sni.DevicesResponse.Types
+@using System.Text
 @inject DeviceService DeviceService
+@implements IDisposable
 
-<h3>DeviceConnection</h3>
 
-<p>@ErrorMessage</p>
+@* <button @onclick="Connect" class="nf @ConnectionClass"></button> *@
+<div class="nf @ConnectionClass"></div>
 
-@if (string.IsNullOrEmpty(_uri))
-{
-    <button @onclick="Connect">Connect</button>
-}
 
-@if (_connectedDevices != null && string.IsNullOrEmpty(_uri))
+@* @if (_connectedDevices != null && string.IsNullOrEmpty(AppState.Uri))
 {
     <div>Select Device:</div>
     <select @onchange="SelectedDeviceChanged">
@@ -22,52 +21,115 @@
             <option value="@device">@device.DisplayName</option>
         }
     </select>
-}
-
-@if (!string.IsNullOrEmpty(_displayName))
-{
-    <p>Connected to: @_displayName</p>
-}
+} *@
 
 @code {
-    private string? _uri;
-    private AddressSpace? _addressSpace;
-    private string? _displayName;
-    private string? ErrorMessage;
-    private List<Device>? _connectedDevices;
+    [CascadingParameter]
+    CascadingAppState AppState { get; set; } = new();
+    @* private List<Device>? _connectedDevices; *@
+    string ConnectionClass = "nf-md-power_plug_off";
+
+    System.Timers.Timer _timer = new System.Timers.Timer(5000);
+
+    protected override Task OnInitializedAsync()
+    {
+        _timer.Elapsed += async (sender, e) => await TimerElapsed();
+        _timer.Start();
+        return base.OnInitializedAsync();
+    }
+
+    async Task TimerElapsed()
+    {
+        await Connect();
+    }
 
     public async Task Connect()
     {
-        DevicesResponse? connectedDevices = new DevicesResponse();
+        DevicesResponse connectedDevices = new();
 
-        try
+        if (string.IsNullOrEmpty(AppState.DeviceName))
         {
-            connectedDevices = await DeviceService.GetDevicesListAsync();
-        }
-        catch (NullReferenceException)
-        {
-            ErrorMessage = "Unable to connect to SNI. Please make sure it's running";
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = ex.Message;
-        }
+            try
+            {
+                connectedDevices = await DeviceService.GetDevicesListAsync() ?? connectedDevices;
+                if (connectedDevices.Devices.Count >= 1)
+                {
+                    var connectedDevice = connectedDevices.Devices.First();
+                    SetSelectedDevice(connectedDevice);
+                }
+                //Eventually re-allow support for selecting among multiple devices that are connected to SNI
+                @* else if (connectedDevices?.Devices.Count > 1)
+            {
+                _connectedDevices = connectedDevices.Devices.First();
+            } *@
+                else
+                {
+                    AppState.ConnectionError = "No Devices found";
+                }
 
-        if (connectedDevices?.Devices.Count == 1)
-        {
-            var connectedDevice = connectedDevices.Devices.First();
-            _uri = connectedDevice.Uri;
-            _addressSpace = connectedDevice.DefaultAddressSpace;
-            _displayName = connectedDevice.DisplayName;
-        }
-        else if (connectedDevices?.Devices.Count > 1)
-        {
-            _connectedDevices = connectedDevices.Devices.ToList();
+                await GetDeviceInfo();
+            }
+            catch (NullReferenceException)
+            {
+                AppState.ConnectionError = "Unable to connect to SNI. Please make sure it's running";
+            }
+            catch (Exception ex)
+            {
+                AppState.ConnectionError = ex.Message;
+            }
         }
         else
         {
-            ErrorMessage = "No Devices found";
+            await GetDeviceInfo();
         }
+    }
+
+    private void SetSelectedDevice(Device device)
+    {
+        AppState.Uri = device.Uri;
+        AppState.DeviceName = device.DisplayName;
+        ConnectionClass = "nf-md-power_plug";
+    }
+
+    private async Task GetDeviceInfo()
+    {
+        if (string.IsNullOrWhiteSpace(AppState.Uri))
+            return;
+
+        var infoClient = new DeviceInfo.DeviceInfoClient(AppState.Channel);
+        var response = await infoClient.FetchFieldsRetryAsync(AppState.Uri,
+                                Field.DeviceName, Field.RomFileName);
+
+        if (!response.Success || response.Data is null)
+        {
+            AppState.ConnectionError = response.ErrorMessage;
+            return;
+        }
+        
+        AppState.ConnectionError = string.Empty;
+
+        if (response.Data.TryGetValue(Field.RomFileName, out var romName))
+        {
+            await SetRomHeader();
+            AppState.RomFileName = romName;
+        }
+
+        if (response.Data.TryGetValue(Field.DeviceName, out var deviceName))
+        {
+            AppState.DeviceName = deviceName;
+        }
+    }
+
+    private async Task SetRomHeader()
+    {
+        if (AppState.RomFileName.EndsWith(".bin")) return;
+        var stuff = new DeviceMemory.DeviceMemoryClient(AppState.Channel);
+        var resp = await stuff.MappingDetectAsync(new DetectMemoryMappingRequest(new DetectMemoryMappingRequest
+        {
+            Uri = AppState.Uri
+        }));
+
+        AppState.RomHeader00FFB0 = resp.RomHeader00FFB0;
     }
 
     private void SelectedDeviceChanged(ChangeEventArgs e)
@@ -77,10 +139,13 @@
             if (e.Value is Device)
             {
                 var device = (Device)e.Value;
-                _uri = device.Uri;
-                _addressSpace = device.DefaultAddressSpace;
-                _displayName = device.DisplayName;
+                SetSelectedDevice(device);
             }
         }
+    }
+
+    public void Dispose()
+    {
+        _timer.Dispose();
     }
 }
