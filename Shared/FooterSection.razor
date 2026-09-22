@@ -1,6 +1,7 @@
+@using System.IO.Enumeration
 @if (!string.IsNullOrWhiteSpace(AppState.RomFileName))
 {
-    <p class="rom-name">Currently Playing: @AppState.RomFileName.Split("/").Last()</p>
+    <p class="rom-name">Currently Playing: @AppState.RomFileName.Split(Path.DirectorySeparatorChar).Last()</p>
 }
 
 @if (!string.IsNullOrWhiteSpace(AppState.ConnectionError))
