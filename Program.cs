@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using Anti.Blazor.LocalStorage;
 using FeTracker.Common.RazorComponents;
 using FeTracker.Sni.Services;
 using FF4FE.Tracker;
@@ -10,7 +11,7 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-
+builder.Services.AddLocalStorage();
 builder.Services.AddSingleton<DeviceService>();
 builder.Services.AddSingleton<TrackerNotifier>();
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });

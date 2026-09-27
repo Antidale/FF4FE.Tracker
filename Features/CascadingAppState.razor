@@ -1,10 +1,13 @@
 ﻿@using System.Text
-@using FeTracker.Common.RazorComponents
+@using Anti.Blazor.LocalStorage
 @using FeTracker.Common.Enums
+@using FeTracker.Common.RazorComponents
 @using FeTracker.Sni.Services
 @using Google.Protobuf
 @using Grpc.Net.Client
 @inject TrackerNotifier notifier;
+@inject IJSRuntime JSRuntime;
+@inject ILocalStorageService localStorage;
 
 <CascadingValue Value="this">
     @ChildContent
@@ -13,6 +16,13 @@
 @code {
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Port = await localStorage.GetItemAsync<int?>("Port") ?? 8190;
+        Host = await localStorage.GetItemAsync<string?>("Host") ?? "localhost";
+        await base.OnInitializedAsync();
+    }
 
     public string Host
     {
@@ -27,7 +37,12 @@
     public int Port
     {
         get;
-        set { field = value; StateHasChanged(); }
+        set
+        {
+            field = value;
+            Task.Run(async () => await localStorage.SetItemAsync<int>(nameof(Port), value));
+            StateHasChanged();
+        }
     } = 8190;
 
     public string Uri

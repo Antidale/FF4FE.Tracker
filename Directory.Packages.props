@@ -3,6 +3,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
+    <PackageVersion Include="Anti.Blazor.LocalStorage" Version="1.0.0" />
     <PackageVersion Include="FeTracker.Common.RazorComponents" Version="2.0.1" />
     <PackageVersion Include="FeTracker.Sni" Version="2.0.1" />
     <PackageVersion Include="Google.Protobuf" Version="3.36.1" />
