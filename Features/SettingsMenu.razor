@@ -23,6 +23,11 @@
                     <div>Text Color</div>
                     <InputText @bind-Value="@AppState.TextColor"></InputText>
                 </section>
+                <secton class="grid-row">
+                    <label for="@nameof(AppState.ShouldReadMetadata)">Read Metadata</label>
+                    <InputCheckbox id="@nameof(AppState.ShouldReadMetadata)"
+                                   @bind-Value="@AppState.ShouldReadMetadata" />
+                </secton>
             </section>
         </div>
     </dialog>

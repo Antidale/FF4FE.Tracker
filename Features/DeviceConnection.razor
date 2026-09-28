@@ -6,11 +6,9 @@
 @inject DeviceService DeviceService
 @implements IDisposable
 
-
-@* <button @onclick="Connect" class="nf @ConnectionClass"></button> *@
 <div class="nf @ConnectionClass"></div>
 
-
+@* TODO: rework this when you get around to supporting a selection from multiple available devices *@
 @* @if (_connectedDevices != null && string.IsNullOrEmpty(AppState.Uri))
 {
     <div>Select Device:</div>
@@ -29,7 +27,7 @@
     @* private List<Device>? _connectedDevices; *@
     string ConnectionClass = "nf-md-power_plug_off";
 
-    System.Timers.Timer _timer = new System.Timers.Timer(5000);
+    System.Timers.Timer _timer = new System.Timers.Timer(TimeSpan.FromSeconds(5));
 
     protected override Task OnInitializedAsync()
     {
@@ -45,6 +43,11 @@
 
     public async Task Connect()
     {
+        if (!AppState.ShouldReadMetadata)
+        {
+            return;
+        }
+
         DevicesResponse connectedDevices = new();
 
         if (string.IsNullOrEmpty(AppState.DeviceName))
@@ -105,7 +108,7 @@
             AppState.ConnectionError = response.ErrorMessage;
             return;
         }
-        
+
         AppState.ConnectionError = string.Empty;
 
         if (response.Data.TryGetValue(Field.RomFileName, out var romName))

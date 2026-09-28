@@ -21,6 +21,7 @@
     {
         Port = await localStorage.GetItemAsync<int?>("Port") ?? 8190;
         Host = await localStorage.GetItemAsync<string?>("Host") ?? "localhost";
+        ShouldReadMetadata = await localStorage.GetItemAsync<bool?>(nameof(ShouldReadMetadata)) ?? true;
         await base.OnInitializedAsync();
     }
 
@@ -50,6 +51,16 @@
         get;
         set { field = value; StateHasChanged(); }
     } = string.Empty;
+
+    public bool ShouldReadMetadata
+    {
+        get;
+        set
+        {
+            field = value;
+            Task.Run(async () => await localStorage.SetItemAsync<bool>(nameof(ShouldReadMetadata), value));
+        }
+    } = true;
 
     public string RomFileName
     {

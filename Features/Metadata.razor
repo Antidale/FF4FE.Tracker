@@ -45,8 +45,8 @@ else
 
     private async Task GetMetadataAsync(StatePropertyChangedArgs args)
     {
-        Console.WriteLine(args.PropertyName);
-        if (!AppState.IsFeHeader
+        if (!AppState.ShouldReadMetadata
+            || !AppState.IsFeHeader
             || AppState.RomFileName.Contains(".bin")
             || !string.IsNullOrWhiteSpace(AppState.ConnectionError))
         {
