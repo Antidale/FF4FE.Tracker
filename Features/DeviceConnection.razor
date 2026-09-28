@@ -1,9 +1,10 @@
 ﻿@using FeTracker.Sni.Extensions
 @using FeTracker.Sni.Services
+@using Grpc.Core
 @using sni
 @using static sni.DevicesResponse.Types
-@using System.Text
 @inject DeviceService DeviceService
+@inject TrackerNotifier trackerNotifier
 @implements IDisposable
 
 <div class="nf @ConnectionClass"></div>
@@ -27,22 +28,40 @@
     @* private List<Device>? _connectedDevices; *@
     string ConnectionClass = "nf-md-power_plug_off";
 
-    System.Timers.Timer _timer = new System.Timers.Timer(TimeSpan.FromSeconds(5));
+    System.Timers.Timer? _timer;
 
-    protected override Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
+        await SetupTimerAsync();
+        trackerNotifier.RegisterCallback(FeTracker.Common.Enums.TrackerEvent.SettingUpdated, new(this, HandlePollingUpdated));
+        await base.OnInitializedAsync();
+    }
+
+    async Task HandlePollingUpdated(StatePropertyChangedArgs args)
+    {
+        if (args.PropertyName != nameof(AppState.PollingFrequency))
+        { return; }
+        _timer?.Stop();
+        _timer?.Elapsed -= async (sender, e) => await TimerElapsed();
+        await SetupTimerAsync();
+    }
+
+    async Task SetupTimerAsync()
+    {
+        _timer = new System.Timers.Timer(TimeSpan.FromSeconds(AppState.PollingFrequency));
         _timer.Elapsed += async (sender, e) => await TimerElapsed();
         _timer.Start();
-        return base.OnInitializedAsync();
     }
 
     async Task TimerElapsed()
     {
+        Console.WriteLine($"{DateTime.Now}: connecting");
         await Connect();
     }
 
-    public async Task Connect()
+    async Task Connect()
     {
+
         if (!AppState.ShouldReadMetadata)
         {
             return;
@@ -67,14 +86,14 @@
             } *@
                 else
                 {
-                    AppState.ConnectionError = "No Devices found";
+                    AppState.ConnectionError = "No devices connected to SNI";
                 }
 
                 await GetDeviceInfo();
             }
-            catch (NullReferenceException)
+            catch (RpcException)
             {
-                AppState.ConnectionError = "Unable to connect to SNI. Please make sure it's running";
+                AppState.ConnectionError = "Unable to connect to SNI. Please make sure it's running, or adjust Host/Port settings.";
             }
             catch (Exception ex)
             {
@@ -113,7 +132,11 @@
 
         if (response.Data.TryGetValue(Field.RomFileName, out var romName))
         {
-            await SetRomHeader();
+            if (!romName.EndsWith(".bin"))
+            {
+                await SetRomHeader();
+            }
+
             AppState.RomFileName = romName;
         }
 
@@ -125,9 +148,8 @@
 
     private async Task SetRomHeader()
     {
-        if (AppState.RomFileName.EndsWith(".bin")) return;
-        var stuff = new DeviceMemory.DeviceMemoryClient(AppState.Channel);
-        var resp = await stuff.MappingDetectAsync(new DetectMemoryMappingRequest(new DetectMemoryMappingRequest
+        var dmc = new DeviceMemory.DeviceMemoryClient(AppState.Channel);
+        var resp = await dmc.MappingDetectAsync(new DetectMemoryMappingRequest(new DetectMemoryMappingRequest
         {
             Uri = AppState.Uri
         }));
@@ -149,6 +171,6 @@
 
     public void Dispose()
     {
-        _timer.Dispose();
+        _timer?.Dispose();
     }
 }

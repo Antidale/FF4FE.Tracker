@@ -59,7 +59,6 @@ else
         {
             _flags = "";
             _objectives = [];
-            Console.WriteLine("cleared flags/objectives");
         }
 
         try
@@ -99,12 +98,6 @@ else
                                 task.Objective = returnValue;
                             }
                         }
-
-                        foreach (var reward in group.Rewards)
-                        {
-                            var thingy = ObjectiveDictionary.GetReward(reward.Description);
-                            thingy.ToString();
-                        }
                     }
                 }
                 catch (Exception ex)
@@ -113,7 +106,6 @@ else
                     Console.WriteLine(metadata.Objectives);
                     AppState.ConnectionError = "Couldn't Parse v5 Objective correctly";
                 }
-
 
                 //add in logic for handling compressed objectives
             }
