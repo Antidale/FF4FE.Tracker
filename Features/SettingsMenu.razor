@@ -4,7 +4,7 @@
         <div>
             <div class="text-header">
                 <h2>Settings</h2>
-                <p>do settings things</p>
+                <p>Settings automatically save</p>
             </div>
             <section class="input-grid">
                 <section class="grid-row">
@@ -12,7 +12,7 @@
                     <InputText @bind-Value="@AppState.Host"></InputText>
                 </section>
                 <section class="grid-row">
-                    <div>Host</div>
+                    <div>Port</div>
                     <InputNumber @bind-Value="@AppState.Port" step="1"></InputNumber>
                 </section>
                 <section class="grid-row">
@@ -22,6 +22,15 @@
                 <section class="grid-row">
                     <div>Text Color</div>
                     <InputText @bind-Value="@AppState.TextColor"></InputText>
+                </section>
+                <secton class="grid-row">
+                    <label for="@nameof(AppState.ShouldReadMetadata)">Read Metadata</label>
+                    <InputCheckbox id="@nameof(AppState.ShouldReadMetadata)"
+                                   @bind-Value="@AppState.ShouldReadMetadata" />
+                </secton>
+                <section class="grid-row">
+                    <div>Polling Interval (seconds)</div>
+                    <InputNumber @bind-Value="@AppState.PollingFrequency" step="1" min="1" max="60"></InputNumber>
                 </section>
             </section>
         </div>

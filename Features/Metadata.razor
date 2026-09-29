@@ -45,8 +45,8 @@ else
 
     private async Task GetMetadataAsync(StatePropertyChangedArgs args)
     {
-        Console.WriteLine(args.PropertyName);
-        if (!AppState.IsFeHeader
+        if (!AppState.ShouldReadMetadata
+            || !AppState.IsFeHeader
             || AppState.RomFileName.Contains(".bin")
             || !string.IsNullOrWhiteSpace(AppState.ConnectionError))
         {
@@ -59,7 +59,6 @@ else
         {
             _flags = "";
             _objectives = [];
-            Console.WriteLine("cleared flags/objectives");
         }
 
         try
@@ -88,7 +87,6 @@ else
                 try
                 {
                     _objectives = [];
-                    Console.WriteLine(metadata.Objectives);
                     _groups = JsonSerializer.Deserialize<List<ObjectiveGroup>>(metadata.Objectives) ?? _groups;
                     foreach (var group in _groups)
                     {
@@ -99,21 +97,12 @@ else
                                 task.Objective = returnValue;
                             }
                         }
-
-                        foreach (var reward in group.Rewards)
-                        {
-                            var thingy = ObjectiveDictionary.GetReward(reward.Description);
-                            thingy.ToString();
-                        }
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    Console.WriteLine(ex.Message);
-                    Console.WriteLine(metadata.Objectives);
                     AppState.ConnectionError = "Couldn't Parse v5 Objective correctly";
                 }
-
 
                 //add in logic for handling compressed objectives
             }
@@ -134,13 +123,11 @@ else
             {
                 _flags = "no flags found.... sadness";
             }
-            Console.WriteLine("Set objectives");
             StateHasChanged();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             AppState.ConnectionError = "Error while trying to get metadata. Make sure you have an FE rom loaded.";
-            Console.WriteLine(ex.Message);
         }
     }
 

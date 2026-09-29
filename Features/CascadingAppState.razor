@@ -1,10 +1,13 @@
 ﻿@using System.Text
-@using FeTracker.Common.RazorComponents
+@using Anti.Blazor.LocalStorage
 @using FeTracker.Common.Enums
+@using FeTracker.Common.RazorComponents
 @using FeTracker.Sni.Services
 @using Google.Protobuf
 @using Grpc.Net.Client
 @inject TrackerNotifier notifier;
+@inject IJSRuntime JSRuntime;
+@inject ILocalStorageService localStorage;
 
 <CascadingValue Value="this">
     @ChildContent
@@ -13,6 +16,16 @@
 @code {
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Port = await localStorage.GetItemAsync<int?>("Port") ?? 8190;
+        Host = await localStorage.GetItemAsync<string?>("Host") ?? "localhost";
+        ShouldReadMetadata = await localStorage.GetItemAsync<bool?>(nameof(ShouldReadMetadata)) ?? true;
+        PollingFrequency = await localStorage.GetItemAsync<int?>(nameof(PollingFrequency)) ?? 5;
+        BackgroundColor = await localStorage.GetItemAsync<string?>(nameof(BackgroundColor)) ?? "#07273f";
+        await base.OnInitializedAsync();
+    }
 
     public string Host
     {
@@ -27,7 +40,12 @@
     public int Port
     {
         get;
-        set { field = value; StateHasChanged(); }
+        set
+        {
+            field = value;
+            Task.Run(async () => await localStorage.SetItemAsync<int>(nameof(Port), value));
+            StateHasChanged();
+        }
     } = 8190;
 
     public string Uri
@@ -35,6 +53,29 @@
         get;
         set { field = value; StateHasChanged(); }
     } = string.Empty;
+
+    public bool ShouldReadMetadata
+    {
+        get;
+        set
+        {
+            field = value;
+            Task.Run(async () => await localStorage.SetItemAsync<bool>(nameof(ShouldReadMetadata), value));
+        }
+    } = true;
+
+    public int PollingFrequency
+    {
+        get;
+        set
+        {
+            if (field == value) { return; }
+            if ((value <= 0 || value > 120)) { return; }
+            field = value;
+            Task.Run(async () => await localStorage.SetItemAsync<int>(nameof(PollingFrequency), value));
+            notifier.PublishEvent(TrackerEvent.SettingUpdated, new(nameof(PollingFrequency), value));
+        }
+    } = 5;
 
     public string RomFileName
     {
@@ -61,14 +102,26 @@
     public string BackgroundColor
     {
         get;
-        set { field = value; StateHasChanged(); }
-    } = string.Empty;
+        set
+        {
+            field = value;
+            StateHasChanged();
+            Task.Run(async () => localStorage.SetItemAsync<string>(nameof(BackgroundColor), value));
+            Task.Run(async () => JSRuntime.InvokeVoidAsync("setBackground", value));
+        }
+    } = "#07273f";
 
     public string TextColor
     {
         get;
-        set { field = value; StateHasChanged(); }
-    } = string.Empty;
+        set
+        {
+            field = value;
+            StateHasChanged();
+            Task.Run(async () => localStorage.SetItemAsync<string>(nameof(TextColor), value));
+            Task.Run(async () => JSRuntime.InvokeVoidAsync("setTextColor", value));
+        }
+    } = "white";
 
     public string ConnectionError
     {
