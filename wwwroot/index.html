@@ -28,6 +28,34 @@
         <a class="dismiss">🗙</a>
     </div>
     <script src="_framework/blazor.webassembly.js"></script>
+    <script>
+        window.setBackground = (value) => {
+            setCustomProperty("--background", value);
+            var trackerBackground = document.getElementsByClassName("tracker-grid");
+            trackerBackground[0].style.setProperty("--tracker-background", value)
+        }
+
+        window.setTextColor = (value) => {
+            setCustomProperty("--color", value);
+            var trackerBackground = document.getElementsByClassName("tracker-grid");
+            trackerBackground[0].style.setProperty("--tracker-border-color", value)
+        }
+
+        window.setCustomProperty = (customProperty, value) => {
+            try {
+                if (!customProperty.startsWith("--")) {
+                    return;
+                }
+                document.documentElement.style.setProperty(customProperty, value)
+
+            }
+            catch (err) {
+                console.log(`tried to set ${customProperty} as if it were a custom property`)
+            }
+
+        }
+
+    </script>
 </body>
 
 </html>

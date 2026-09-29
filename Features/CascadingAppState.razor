@@ -23,6 +23,7 @@
         Host = await localStorage.GetItemAsync<string?>("Host") ?? "localhost";
         ShouldReadMetadata = await localStorage.GetItemAsync<bool?>(nameof(ShouldReadMetadata)) ?? true;
         PollingFrequency = await localStorage.GetItemAsync<int?>(nameof(PollingFrequency)) ?? 5;
+        BackgroundColor = await localStorage.GetItemAsync<string?>(nameof(BackgroundColor)) ?? "#07273f";
         await base.OnInitializedAsync();
     }
 
@@ -101,14 +102,26 @@
     public string BackgroundColor
     {
         get;
-        set { field = value; StateHasChanged(); }
-    } = string.Empty;
+        set
+        {
+            field = value;
+            StateHasChanged();
+            Task.Run(async () => localStorage.SetItemAsync<string>(nameof(BackgroundColor), value));
+            Task.Run(async () => JSRuntime.InvokeVoidAsync("setBackground", value));
+        }
+    } = "#07273f";
 
     public string TextColor
     {
         get;
-        set { field = value; StateHasChanged(); }
-    } = string.Empty;
+        set
+        {
+            field = value;
+            StateHasChanged();
+            Task.Run(async () => localStorage.SetItemAsync<string>(nameof(TextColor), value));
+            Task.Run(async () => JSRuntime.InvokeVoidAsync("setTextColor", value));
+        }
+    } = "white";
 
     public string ConnectionError
     {
