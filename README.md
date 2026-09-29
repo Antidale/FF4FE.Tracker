@@ -20,15 +20,18 @@ If you switch to a different seed, the tracker will reset the key items state an
 * 4.x and 5.0 objectives automatically loaded when an FE rom is loaded on to a device connected to SNI
   * tested with both an FxPak Pro and [snes9x-emunwa](https://github.com/Skarsnik/snes9x-emunwa/releases). BizHawk and snes9x-rr should work with the lua bridge, but have not been tested.
 * lists the loaded ROM name (tested as working with an FxPak Pro)
+* settings menu to customize (values are kept in localStorage on your browser):
+  * if the tracker should connect at all
+  * polling interval
+  * background color
+  * text/border color
+  * SNI host and port information
 
 ## Possible Roadmap Items
 The following are some likely additions and improvements to the tracker
+* Place to input/indicate Baigain spot boss
 * Indicate Key Items required for objectives
 * Indicate the Hard Required objectives, when that setting is used on the Galeswift fork
-* Settings and Setting storage
-  * host/port for SNI
-  * background color
-  * font color
   * KI indication on/off
   * Displaying flags
   * Displaying flag annotations
