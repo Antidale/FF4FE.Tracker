@@ -32,13 +32,11 @@ The following are some likely additions and improvements to the tracker
 * Place to input/indicate Baigain spot boss
 * Indicate Key Items required for objectives
 * Indicate the Hard Required objectives, when that setting is used on the Galeswift fork
-  * KI indication on/off
-  * Displaying flags
-  * Displaying flag annotations
-    * Possible: customizing flag annotations
-* Flags displayed - flags are currently obtained but never displayed. This probably never shows the objective section, since the current seed objectives will be displayed on the tracker.
+* KI indication on/off
+* Displaying flags
+* Displaying flag annotations
+  * Possible: customizing flag annotations
 * Version displayed - version is currently obtained but never displayed
-* Some flag annotations
 * 5.0 objective completion cascade. e.g. if Objecive Group B has an objective that requires an objective in Group A to be completed, when the first objective in Group A is marked, that Group B objective automatically is marked as completed.
 
 ## SNI
