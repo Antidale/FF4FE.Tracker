@@ -87,7 +87,6 @@ else
                 try
                 {
                     _objectives = [];
-                    Console.WriteLine(metadata.Objectives);
                     _groups = JsonSerializer.Deserialize<List<ObjectiveGroup>>(metadata.Objectives) ?? _groups;
                     foreach (var group in _groups)
                     {
@@ -100,10 +99,8 @@ else
                         }
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    Console.WriteLine(ex.Message);
-                    Console.WriteLine(metadata.Objectives);
                     AppState.ConnectionError = "Couldn't Parse v5 Objective correctly";
                 }
 
@@ -126,13 +123,11 @@ else
             {
                 _flags = "no flags found.... sadness";
             }
-            Console.WriteLine("Set objectives");
             StateHasChanged();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             AppState.ConnectionError = "Error while trying to get metadata. Make sure you have an FE rom loaded.";
-            Console.WriteLine(ex.Message);
         }
     }
 
