@@ -1,0 +1,50 @@
+﻿@inject TrackerNotifier notifier
+
+@* 
+    label and a button for opening a popup for selecting the boss 
+    needs to listen for the reset/new rom to de-select
+    take in the spot name as a param in case I need
+    
+*@
+<section id="@Label">
+    <button popovertarget="@Label-dialog" class="selector-button">@Label</button>
+    <dialog class="boss-popover" popover id="@Label-dialog">
+        <div class="boss-grid">
+            @foreach (var boss in BossBattles)
+            {
+                <img src="@GetImgPath(boss)" />
+            }
+        </div>
+        @* 
+        set up a grid for all the boss sprites
+        assign the name to selectedBoss on click
+        organize them the same way schala's tracker does
+    *@
+
+    </dialog>
+</section>
+
+
+@code {
+    [Parameter]
+    public required string Label { get; set; }
+
+    List<string> BossBattles = Enum.GetNames<BossBattle>().ToList();
+
+    string selectedBoss { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        notifier.RegisterCallback(TrackerEvent.RomUpdated, new(this, ResetMetadata));
+        notifier.RegisterCallback(TrackerEvent.Reset, new(this, ResetMetadata));
+        await base.OnInitializedAsync();
+    }
+
+    private void ResetMetadata(StatePropertyChangedArgs args)
+    {
+        selectedBoss = string.Empty;
+    }
+
+    string GetImgPath(string boss) => $"Icons/Bosses/{boss}.png";
+
+}
