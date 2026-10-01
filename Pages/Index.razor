@@ -1,6 +1,6 @@
-﻿@using Anti.Blazor.LocalStorage
-@using FF4FE.Tracker.Features;
-@using FF4FE.Tracker.Shared;
+﻿@using FF4FE.Tracker.Features.BossSelection
+@using FF4FE.Tracker.Features.SNI
+@using FF4FE.Tracker.Layout
 @using FeTracker.Common.RazorComponents;
 
 @page "/"
@@ -15,6 +15,7 @@
     <section class="tracker">
         <KeyItemsTracker HideReset="true" />
         @* <ResetButton /> *@
+        <BossSelector Label="Baigan" />
     </section>
 </div>
 <FooterSection />

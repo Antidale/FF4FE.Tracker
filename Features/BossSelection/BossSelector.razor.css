@@ -1,0 +1,53 @@
+.selector-button {
+    background-color: var(--background);
+    margin-top: .5px;
+    padding: 10px 5px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    line-height: 1.1;
+    color: var(--color);
+    border-radius: 5px;
+    border: 1px solid;
+}
+
+.undo-button {
+    background-color: var(--background);
+    margin-top: .5px;
+    padding: 10px 5px;
+    font-size: .9rem;
+    font-weight: bold;
+    line-height: 1.1;
+    color: var(--color);
+    border: none
+}
+
+dialog {
+    color: var(--color);
+    background-color: var(--background);
+    padding: 2rem;
+}
+
+dialog::backdrop {
+    backdrop-filter: blur(5px);
+}
+
+.boss-grid {
+    padding: 10px;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: .5rem;
+    align-items: center;
+}
+
+h3 {
+    margin-bottom: 2rem;
+}
+
+
+.flex-row {
+    font-size: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}

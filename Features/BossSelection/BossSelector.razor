@@ -1,0 +1,73 @@
+﻿@using System.Reflection.Metadata
+@using System.Security.Cryptography.X509Certificates
+@inject TrackerNotifier notifier;
+@inject IJSRuntime JSRuntime;
+
+@* 
+    label and a button for opening a popup for selecting the boss 
+    needs to listen for the reset/new rom to de-select
+    take in the spot name as a param in case I need
+    
+*@
+<section id="@Label">
+    @if (selectedBoss is null)
+    {
+        <button popovertarget="@Label-dialog" class="selector-button">@Label Spot</button>
+        <dialog class="boss-popover" popover id="@Label-dialog">
+            <h3>Boss in the @Label location</h3>
+            <div class="boss-grid">
+                @for (var i = 0; i < BossBattles.Count(); i++)
+                {
+                    var internalIndex = i;
+                    <ClickableIcon Icon=BossBattles[i] IconEvent="TrackerEvent.BossUpdated" />
+                }
+            </div>
+        </dialog>
+    }
+    else
+    {
+        <div class="flex-row">
+            <span>@Label:</span>
+            <ClickableIcon Icon="@selectedBoss" />
+            <button class="nf nf-fa-undo undo-button" @onclick="Reset" />
+        </div>
+        
+    }
+
+</section>
+
+
+@code {
+    [Parameter]
+    public required string Label { get; set; }
+
+    List<ClickableBossIcon> BossBattles = Enum.GetValues<BossPreview>().Select(x => new ClickableBossIcon(x)).ToList();
+
+    ClickableBossIcon? selectedBoss { get; set; } = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        notifier.RegisterCallback(TrackerEvent.RomUpdated, new(this, ResetMetadata));
+        notifier.RegisterCallback(TrackerEvent.Reset, new(this, ResetMetadata));
+        notifier.RegisterCallback(TrackerEvent.BossUpdated, new(this, HandleBossSelected));
+        await base.OnInitializedAsync();
+    }
+
+    private void ResetMetadata(StatePropertyChangedArgs args)
+    {
+        selectedBoss = null;
+    }
+
+    private void HandleBossSelected(StatePropertyChangedArgs args)
+    {
+        selectedBoss = BossBattles.First(x => x.Name == args.PropertyName);
+        Task.Run(async () => await JSRuntime.InvokeVoidAsync("closeDialogById", $"{Label}-dialog"));
+    }
+
+    string GetImgPath(string boss) => $"Icons/Bosses/{boss}.png";
+
+    private void Reset()
+    {
+        selectedBoss = null;
+    }
+}
