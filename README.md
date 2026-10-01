@@ -26,6 +26,7 @@ If you switch to a different seed, the tracker will reset the key items state an
   * background color
   * text/border color
   * SNI host and port information
+* Allows marking the boss seen at the Baigan spot at the start of the seed
 
 ## Possible Roadmap Items
 The following are some likely additions and improvements to the tracker
