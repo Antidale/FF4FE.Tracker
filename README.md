@@ -39,6 +39,8 @@ The following are some likely additions and improvements to the tracker
   * Possible: customizing flag annotations
 * Version displayed - version is currently obtained but never displayed
 * 5.0 objective completion cascade. e.g. if Objecive Group B has an objective that requires an objective in Group A to be completed, when the first objective in Group A is marked, that Group B objective automatically is marked as completed.
+* Additional Boss Preview locations
+* Ability to track if D.Mist has been defeated, when D.Mist can be a KI check.
 
 ## SNI
 * [Get SNI](https://github.com/alttpo/sni/releases)
