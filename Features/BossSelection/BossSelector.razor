@@ -3,12 +3,6 @@
 @inject TrackerNotifier notifier;
 @inject IJSRuntime JSRuntime;
 
-@* 
-    label and a button for opening a popup for selecting the boss 
-    needs to listen for the reset/new rom to de-select
-    take in the spot name as a param in case I need
-    
-*@
 <section id="@Label">
     @if (selectedBoss is null)
     {
@@ -31,11 +25,9 @@
             <ClickableIcon Icon="@selectedBoss" />
             <button class="nf nf-fa-undo undo-button" @onclick="Reset" />
         </div>
-        
     }
 
 </section>
-
 
 @code {
     [Parameter]
@@ -48,15 +40,11 @@
     protected override async Task OnInitializedAsync()
     {
         notifier.RegisterCallback(TrackerEvent.RomUpdated, new(this, ResetMetadata));
-        notifier.RegisterCallback(TrackerEvent.Reset, new(this, ResetMetadata));
         notifier.RegisterCallback(TrackerEvent.BossUpdated, new(this, HandleBossSelected));
         await base.OnInitializedAsync();
     }
 
-    private void ResetMetadata(StatePropertyChangedArgs args)
-    {
-        selectedBoss = null;
-    }
+    private void ResetMetadata(StatePropertyChangedArgs args) => Reset();
 
     private void HandleBossSelected(StatePropertyChangedArgs args)
     {
@@ -66,8 +54,5 @@
 
     string GetImgPath(string boss) => $"Icons/Bosses/{boss}.png";
 
-    private void Reset()
-    {
-        selectedBoss = null;
-    }
+    private void Reset() => selectedBoss = null;
 }

@@ -36,7 +36,6 @@ else
 
     protected override void OnInitialized()
     {
-        trackerNotifier.RegisterCallback(TrackerEvent.Reset, new(this, GetMetadataAsync));
         trackerNotifier.RegisterCallback(TrackerEvent.RomUpdated, new(this, GetMetadataAsync));
         base.OnInitialized();
     }
@@ -52,8 +51,7 @@ else
         }
 
         if (args.PropertyName == nameof(AppState.RomFileName)
-           || args.PropertyName == nameof(AppState.RomHeader00FFB0)
-           || args.PropertyName == TrackerEvent.Reset.ToString())
+           || args.PropertyName == nameof(AppState.RomHeader00FFB0))
         {
             _flags = "";
             _objectives = [];
