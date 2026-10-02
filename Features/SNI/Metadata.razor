@@ -1,12 +1,10 @@
 ﻿@using System.Collections;
 @using System.Text
-@using System.Text.Json;
 @using FF4FE.Tracker.Features.Objectives
 @using FeTracker.Common.Enums
 @using FeTracker.Sni.Classes
 @using FeTracker.Sni.Models
 @using sni;
-@using static sni.DeviceMemory
 @inject TrackerNotifier trackerNotifier
 
 @if (_objectives.Any())
@@ -16,7 +14,6 @@
         {
             <Objective ObjectiveText="@obj" />
         }
-    
     </ul>
 }
 else
@@ -62,99 +59,19 @@ else
             _objectives = [];
         }
 
-        try
+        var seedDetail = await MetadataHelper.GetSeedDetails(AppState.Channel!, AppState.Uri);
+        if (seedDetail.Success)
         {
-            var memoryClient = new DeviceMemory.DeviceMemoryClient(AppState.Channel);
-            var jsonDocLength = await GetMetadataDocLength(memoryClient);
-            if (!jsonDocLength.Success)
-            {
-                //Given we're looking for the fe header, this shouldn't happen
-                AppState.ConnectionError = "Unable to get metadata. Are you sure you have an FE seed loaded?";
-            }
-
-            var docString = await memoryClient.ReadByMemoryAddressAsync(AddressData.JsonDocument, AppState.Uri, jsonDocLength.Data);
-
-            if (!docString.Success || docString.Data is null) { return; }
-
-            var stuff = docString.Data.Response.Data.ToStringUtf8();
-            var metadata = JsonSerializer.Deserialize<SeedMetadata>(docString.Data.Response.Data.ToStringUtf8());
-
-            if (metadata is null) { return; }
-
-            AppState.Version = metadata.Version;
-
-            if (metadata.Version.StartsWith("v5"))
-            {
-                try
-                {
-                    _objectives = [];
-                    _groups = JsonSerializer.Deserialize<List<ObjectiveGroup>>(metadata.Objectives) ?? _groups;
-                    foreach (var group in _groups)
-                    {
-                        foreach (var task in group.Tasks)
-                        {
-                            if (ObjectiveDictionary.TryGetObjectiveText(task.Objective, task.Threshold, out var returnValue))
-                            {
-                                task.Objective = returnValue;
-                            }
-                        }
-                    }
-                }
-                catch (Exception)
-                {
-                    AppState.ConnectionError = "Couldn't Parse v5 Objective correctly";
-                }
-
-                //add in logic for handling compressed objectives
-            }
-            else if (metadata.Version.StartsWith("v0.4") || metadata.Version.StartsWith("v4."))
-            {
-                _groups = [];
-                _objectives = JsonSerializer.Deserialize<List<string>>(metadata.Objectives) ?? _objectives;
-            }
-
-            @* //TODO: add eventual check for compressed metadata
-            if (true)
-            {
-                
-            } *@
-
-            _flags = metadata.Flags ?? "no flags found. . . sadness";
-            if (string.IsNullOrWhiteSpace(_flags))
-            {
-                _flags = "no flags found.... sadness";
-            }
-            StateHasChanged();
+            _flags = seedDetail.Data.Flags;
+            _objectives = seedDetail.Data.Objectives;
+            _groups = seedDetail.Data.ObjectiveGroups;
+            AppState.ConnectionError = string.Empty;
         }
-        catch (Exception)
+        else
         {
-            AppState.ConnectionError = "Error while trying to get metadata. Make sure you have an FE rom loaded.";
+            ResetMetadata(new(nameof(GetMetadataAsync), true));
         }
-    }
-
-    private async Task<Response<UInt32>> GetMetadataDocLength(DeviceMemoryClient client)
-    {
-        var response = await client.ReadByMemoryAddressAsync(AddressData.Metadata, AppState.Uri);
-
-        if (response.Data is null || !response.Success)
-        {
-            return Response<UInt32>.SetError(response.ErrorMessage);
-        }
-
-        try
-        {
-            var jsonDocLength = BitConverter.ToUInt32(response.Data.Response.Data.ToArray(), 0);
-            if (jsonDocLength == 0)
-            {
-                return Response<UInt32>.SetError("Unexpected metadata document length of 0 returned");
-            }
-
-            return Response<UInt32>.SetSuccess(jsonDocLength);
-        }
-        catch (Exception ex)
-        {
-            return Response<UInt32>.SetError(ex.Message);
-        }
+        StateHasChanged();
     }
 
     public async Task GetFoundKeyItems()
