@@ -1,10 +1,7 @@
-﻿@using System.Collections;
-@using System.Text
-@using FF4FE.Tracker.Features.Objectives
+﻿@using FF4FE.Tracker.Features.Objectives
 @using FeTracker.Common.Enums
 @using FeTracker.Sni.Classes
 @using FeTracker.Sni.Models
-@using sni;
 @inject TrackerNotifier trackerNotifier
 
 @if (_objectives.Any())
@@ -63,6 +60,7 @@ else
             _flags = seedDetail.Data.Flags;
             _objectives = seedDetail.Data.Objectives;
             _groups = seedDetail.Data.ObjectiveGroups;
+            AppState.Version = seedDetail.Data.Version;
             AppState.ConnectionError = string.Empty;
         }
         else
@@ -70,46 +68,6 @@ else
             ResetMetadata(new(nameof(GetMetadataAsync), true));
         }
         StateHasChanged();
-    }
-
-    public async Task GetFoundKeyItems()
-    {
-        var channel = GrpcChannelService.GetChannel(AppState.Port, AppState.Host, true);
-        var memoryClient = new DeviceMemory.DeviceMemoryClient(channel);
-        var readMemoryRequest = new SingleReadMemoryRequest
-        {
-            Request = new ReadMemoryRequest
-            {
-                RequestAddress = AddressData.FOUND_KEY_ITEMS.Address,
-                RequestAddressSpace = AddressSpace.FxPakPro,
-                RequestMemoryMapping = MemoryMapping.LoRom,
-                Size = AddressData.FOUND_KEY_ITEMS.Size
-            },
-            Uri = AppState.Uri,
-        };
-
-        var response = await memoryClient.SingleReadAsync(readMemoryRequest);
-
-        var reponseData = response.Response.Data.ToByteArray();
-        var stuff = new BitArray(reponseData);
-
-        var stringBuilder = new StringBuilder();
-        @* _testKi.Add("Found KI");
-        for (var i = 0; i < 17; i++)
-        {
-            _testKi.Add($"Index {(KeyItem)i}, Value: {stuff[i]}");
-        } *@
-
-        readMemoryRequest.Request.RequestAddress = AddressData.USED_KEY_ITEMS.Address;
-        readMemoryRequest.Request.Size = AddressData.USED_KEY_ITEMS.Size;
-        response = await memoryClient.SingleReadAsync(readMemoryRequest);
-        reponseData = response.Response.Data.ToByteArray();
-        stuff = new BitArray(reponseData);
-        @* _testKi.Add("Used KI");
-        for (var i = 0; i < 17; i++)
-        {
-            _testKi.Add($"Index {(KeyItem)i}, Value: {stuff[i]}");
-        } *@
     }
 
     private void ResetMetadata(StatePropertyChangedArgs args)
