@@ -2,35 +2,43 @@
 @inject TrackerNotifier notifier;
 @inject IJSRuntime JSRuntime;
 
-<section id="@Label">
-    @if (selectedBoss is null)
-    {
-        <button popovertarget="@Label-dialog" class="selector-button">@Label Spot</button>
-        <dialog class="boss-popover" popover id="@Label-dialog">
-            <h3>Boss in the @Label location</h3>
-            <div class="boss-grid">
-                @for (var i = 0; i < BossBattles.Count(); i++)
-                {
-                    var internalIndex = i;
-                    <ClickableIcon Icon=BossBattles[i] IconEvent="TrackerEvent.BossUpdated" />
-                }
-            </div>
-        </dialog>
-    }
-    else
-    {
-        <div class="flex-row">
-            <span>@Label:</span>
-            <ClickableIcon Icon="@selectedBoss" />
-            <button class="nf nf-fa-undo undo-button" @onclick="Reset" />
-        </div>
-    }
 
-</section>
+@if (AppState.ShowBaiganSpot)
+{
+    <section id="@Label">
+        @if (selectedBoss is null)
+        {
+            <button popovertarget="@Label-dialog" class="selector-button">@Label Spot</button>
+            <dialog class="boss-popover" popover id="@Label-dialog">
+                <h3>Boss in the @Label location</h3>
+                <div class="boss-grid">
+                    @for (var i = 0; i < BossBattles.Count(); i++)
+                    {
+                        var internalIndex = i;
+                        <ClickableIcon Icon=BossBattles[i] IconEvent="TrackerEvent.BossUpdated" />
+                    }
+                </div>
+            </dialog>
+        }
+        else
+        {
+            <div class="flex-row">
+                <span>@Label:</span>
+                <ClickableIcon Icon="@selectedBoss" />
+                <button class="nf nf-fa-undo undo-button" @onclick="Reset" />
+            </div>
+        }
+
+    </section>
+}
+
 
 @code {
     [Parameter]
     public required string Label { get; set; }
+
+    [CascadingParameter]
+    public CascadingAppState AppState { get; set; } = new();
 
     List<ClickableBossIcon> BossBattles = Enum.GetValues<BossPreview>().Select(x => new ClickableBossIcon(x)).ToList();
 

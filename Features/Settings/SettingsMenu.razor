@@ -23,11 +23,15 @@
                     <div>Text Color</div>
                     <InputText @bind-Value="@AppState.TextColor"></InputText>
                 </section>
-                <secton class="grid-row">
+                <section class="grid-row">
                     <label for="@nameof(AppState.ShouldReadMetadata)">Read Metadata</label>
                     <InputCheckbox id="@nameof(AppState.ShouldReadMetadata)"
                                    @bind-Value="@AppState.ShouldReadMetadata" />
-                </secton>
+                </section>
+                <section class="grid-row">
+                    <label for="@nameof(AppState.ShowBaiganSpot)">Baigan Spot</label>
+                    <InputCheckbox id="@nameof(AppState.ShowBaiganSpot)" @bind-Value="@AppState.ShowBaiganSpot" />
+                </section>
                 <section class="grid-row">
                     <div>Polling Interval (seconds)</div>
                     <InputNumber @bind-Value="@AppState.PollingFrequency" step="1" min="1" max="60"></InputNumber>
