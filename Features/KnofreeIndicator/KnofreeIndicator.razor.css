@@ -1,0 +1,10 @@
+div {
+    margin-top: 1rem;
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+}
+
+span {
+    vertical-align: middle;
+}

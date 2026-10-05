@@ -1,10 +1,7 @@
-﻿@using System.Collections;
-@using System.Text
-@using FF4FE.Tracker.Features.Objectives
+﻿@using FF4FE.Tracker.Features.Objectives
 @using FeTracker.Common.Enums
 @using FeTracker.Sni.Classes
 @using FeTracker.Sni.Models
-@using sni;
 @inject TrackerNotifier trackerNotifier
 
 @if (_objectives.Any())
@@ -29,8 +26,6 @@ else
 @code {
     [CascadingParameter]
     CascadingAppState AppState { get; set; } = new();
-
-    private string _flags = string.Empty;
     private List<string> _objectives = [];
     private List<ObjectiveGroup> _groups = [];
 
@@ -53,16 +48,17 @@ else
         if (args.PropertyName == nameof(AppState.RomFileName)
            || args.PropertyName == nameof(AppState.RomHeader00FFB0))
         {
-            _flags = "";
+            AppState.Flags = "";
             _objectives = [];
         }
 
         var seedDetail = await MetadataHelper.GetSeedDetails(AppState.Channel!, AppState.Uri);
         if (seedDetail.Success)
         {
-            _flags = seedDetail.Data.Flags;
+            AppState.Flags = seedDetail.Data.Flags;
             _objectives = seedDetail.Data.Objectives;
             _groups = seedDetail.Data.ObjectiveGroups;
+            AppState.Version = seedDetail.Data.Version;
             AppState.ConnectionError = string.Empty;
         }
         else
@@ -72,49 +68,9 @@ else
         StateHasChanged();
     }
 
-    public async Task GetFoundKeyItems()
-    {
-        var channel = GrpcChannelService.GetChannel(AppState.Port, AppState.Host, true);
-        var memoryClient = new DeviceMemory.DeviceMemoryClient(channel);
-        var readMemoryRequest = new SingleReadMemoryRequest
-        {
-            Request = new ReadMemoryRequest
-            {
-                RequestAddress = AddressData.FOUND_KEY_ITEMS.Address,
-                RequestAddressSpace = AddressSpace.FxPakPro,
-                RequestMemoryMapping = MemoryMapping.LoRom,
-                Size = AddressData.FOUND_KEY_ITEMS.Size
-            },
-            Uri = AppState.Uri,
-        };
-
-        var response = await memoryClient.SingleReadAsync(readMemoryRequest);
-
-        var reponseData = response.Response.Data.ToByteArray();
-        var stuff = new BitArray(reponseData);
-
-        var stringBuilder = new StringBuilder();
-        @* _testKi.Add("Found KI");
-        for (var i = 0; i < 17; i++)
-        {
-            _testKi.Add($"Index {(KeyItem)i}, Value: {stuff[i]}");
-        } *@
-
-        readMemoryRequest.Request.RequestAddress = AddressData.USED_KEY_ITEMS.Address;
-        readMemoryRequest.Request.Size = AddressData.USED_KEY_ITEMS.Size;
-        response = await memoryClient.SingleReadAsync(readMemoryRequest);
-        reponseData = response.Response.Data.ToByteArray();
-        stuff = new BitArray(reponseData);
-        @* _testKi.Add("Used KI");
-        for (var i = 0; i < 17; i++)
-        {
-            _testKi.Add($"Index {(KeyItem)i}, Value: {stuff[i]}");
-        } *@
-    }
-
     private void ResetMetadata(StatePropertyChangedArgs args)
     {
-        _flags = string.Empty;
+        AppState.Flags = string.Empty;
         _objectives = [];
         AppState.ConnectionError = string.Empty;
         StateHasChanged();

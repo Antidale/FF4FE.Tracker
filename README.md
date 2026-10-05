@@ -26,11 +26,14 @@ If you switch to a different seed, the tracker will reset the key items state an
   * background color
   * text/border color
   * SNI host and port information
+  * Show helpers for tracking
+    * Boss at Baigan Spot
+    * Knofree
 * Allows marking the boss seen at the Baigan spot at the start of the seed
+* Allows tracking of the state of Knofree, in a similar manner to KI state changes
 
 ## Possible Roadmap Items
 The following are some likely additions and improvements to the tracker
-* Place to input/indicate Baigain spot boss
 * Indicate Key Items required for objectives
 * Indicate the Hard Required objectives, when that setting is used on the Galeswift fork
 * KI indication on/off
@@ -40,7 +43,9 @@ The following are some likely additions and improvements to the tracker
 * Version displayed - version is currently obtained but never displayed
 * 5.0 objective completion cascade. e.g. if Objecive Group B has an objective that requires an objective in Group A to be completed, when the first objective in Group A is marked, that Group B objective automatically is marked as completed.
 * Additional Boss Preview locations
-* Ability to track if D.Mist has been defeated, when D.Mist can be a KI check.
+* Ability to track if D.Mist has been defeated, when D.Mist can be a KI check. (and/or handle Knofree:package or Knofree:dwarf)
+* 4.x seeds: display a "do x of y for {game | crystal}" underneath the objectives
+
 
 ## SNI
 * [Get SNI](https://github.com/alttpo/sni/releases)

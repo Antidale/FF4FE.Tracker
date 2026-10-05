@@ -123,7 +123,7 @@
 
         if (!response.Success || response.Data is null)
         {
-            AppState.ConnectionError = response.ErrorMessage;
+            AppState.ConnectionError = $"Lost connection to {AppState.DeviceName}";
             return;
         }
 

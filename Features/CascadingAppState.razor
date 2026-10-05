@@ -24,9 +24,13 @@
         ShouldReadMetadata = await localStorage.GetItemAsync<bool?>(nameof(ShouldReadMetadata)) ?? true;
         PollingFrequency = await localStorage.GetItemAsync<int?>(nameof(PollingFrequency)) ?? 5;
         BackgroundColor = await localStorage.GetItemAsync<string?>(nameof(BackgroundColor)) ?? "#07273f";
+        ShowBaiganSpot = await localStorage.GetItemAsync<bool?>(nameof(ShowBaiganSpot)) ?? true;
+        ShowKnofree = await localStorage.GetItemAsync<bool?>(nameof(ShowKnofree)) ?? true;
+
         await base.OnInitializedAsync();
     }
 
+    #region - Settings Properties -
     public string Host
     {
         get;
@@ -35,7 +39,6 @@
             field = value; StateHasChanged();
         }
     } = "localhost";
-
 
     public int Port
     {
@@ -47,12 +50,6 @@
             StateHasChanged();
         }
     } = 8190;
-
-    public string Uri
-    {
-        get;
-        set { field = value; StateHasChanged(); }
-    } = string.Empty;
 
     public bool ShouldReadMetadata
     {
@@ -77,28 +74,6 @@
         }
     } = 5;
 
-    public string RomFileName
-    {
-        get;
-        set
-        {
-            if (string.Equals(field, value)) { return; }
-            field = value;
-            StateHasChanged();
-            if (IsFeHeader)
-            {
-                notifier.PublishEvent(TrackerEvent.RomUpdated, new(nameof(RomFileName), value));
-            }
-
-        }
-    } = string.Empty;
-
-    public string DeviceName
-    {
-        get;
-        set { field = value; StateHasChanged(); }
-    } = string.Empty;
-
     public string BackgroundColor
     {
         get;
@@ -122,6 +97,59 @@
             Task.Run(async () => JSRuntime.InvokeVoidAsync("setTextColor", value));
         }
     } = "white";
+
+    public bool ShowBaiganSpot
+    {
+        get;
+        set
+        {
+            field = value;
+            StateHasChanged();
+            Task.Run(async () => localStorage.SetItemAsync<bool>(nameof(ShowBaiganSpot), value));
+        }
+    } = true;
+
+    public bool ShowKnofree
+    {
+        get;
+        set
+        {
+            field = value;
+            StateHasChanged();
+            Task.Run(async () => localStorage.SetItemAsync<bool>(nameof(ShowKnofree), value));
+        }
+    } = true;
+
+    #endregion //Settings
+
+    #region - SNI Connection Information -
+    public string Uri
+    {
+        get;
+        set { field = value; StateHasChanged(); }
+    } = string.Empty;
+
+    public string RomFileName
+    {
+        get;
+        set
+        {
+            if (string.Equals(field, value)) { return; }
+            field = value;
+            StateHasChanged();
+            if (IsFeHeader)
+            {
+                notifier.PublishEvent(TrackerEvent.RomUpdated, new(nameof(RomFileName), value));
+            }
+
+        }
+    } = string.Empty;
+
+    public string DeviceName
+    {
+        get;
+        set { field = value; StateHasChanged(); }
+    } = string.Empty;
 
     public string ConnectionError
     {
@@ -155,5 +183,16 @@
     {
         get;
         set { field = value; }
+    } = string.Empty;
+    #endregion //SNI Connection Info
+
+    public string Flags
+    {
+        get;
+        set
+        {
+            field = value; StateHasChanged(); notifier.PublishEvent(TrackerEvent.SettingUpdated,
+            new StatePropertyChangedArgs(nameof(Flags), true));
+        }
     } = string.Empty;
 }
