@@ -33,6 +33,10 @@
                     <InputCheckbox id="@nameof(AppState.ShowBaiganSpot)" @bind-Value="@AppState.ShowBaiganSpot" />
                 </section>
                 <section class="grid-row">
+                    <label for="@nameof(AppState.ShowKnofree)">Knofree Info</label>
+                    <InputCheckbox id="@nameof(AppState.ShowKnofree)" @bind-Value="@AppState.ShowKnofree" />
+                </section>
+                <section class="grid-row">
                     <div>Polling Interval (seconds)</div>
                     <InputNumber @bind-Value="@AppState.PollingFrequency" step="1" min="1" max="60"></InputNumber>
                 </section>

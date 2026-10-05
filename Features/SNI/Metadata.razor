@@ -26,8 +26,6 @@ else
 @code {
     [CascadingParameter]
     CascadingAppState AppState { get; set; } = new();
-
-    private string _flags = string.Empty;
     private List<string> _objectives = [];
     private List<ObjectiveGroup> _groups = [];
 
@@ -50,14 +48,14 @@ else
         if (args.PropertyName == nameof(AppState.RomFileName)
            || args.PropertyName == nameof(AppState.RomHeader00FFB0))
         {
-            _flags = "";
+            AppState.Flags = "";
             _objectives = [];
         }
 
         var seedDetail = await MetadataHelper.GetSeedDetails(AppState.Channel!, AppState.Uri);
         if (seedDetail.Success)
         {
-            _flags = seedDetail.Data.Flags;
+            AppState.Flags = seedDetail.Data.Flags;
             _objectives = seedDetail.Data.Objectives;
             _groups = seedDetail.Data.ObjectiveGroups;
             AppState.Version = seedDetail.Data.Version;
@@ -72,7 +70,7 @@ else
 
     private void ResetMetadata(StatePropertyChangedArgs args)
     {
-        _flags = string.Empty;
+        AppState.Flags = string.Empty;
         _objectives = [];
         AppState.ConnectionError = string.Empty;
         StateHasChanged();

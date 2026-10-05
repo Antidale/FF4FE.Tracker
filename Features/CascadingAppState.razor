@@ -25,6 +25,7 @@
         PollingFrequency = await localStorage.GetItemAsync<int?>(nameof(PollingFrequency)) ?? 5;
         BackgroundColor = await localStorage.GetItemAsync<string?>(nameof(BackgroundColor)) ?? "#07273f";
         ShowBaiganSpot = await localStorage.GetItemAsync<bool?>(nameof(ShowBaiganSpot)) ?? true;
+        ShowKnofree = await localStorage.GetItemAsync<bool?>(nameof(ShowKnofree)) ?? true;
 
         await base.OnInitializedAsync();
     }
@@ -106,7 +107,18 @@
             StateHasChanged();
             Task.Run(async () => localStorage.SetItemAsync<bool>(nameof(ShowBaiganSpot), value));
         }
-    }
+    } = true;
+
+    public bool ShowKnofree
+    {
+        get;
+        set
+        {
+            field = value;
+            StateHasChanged();
+            Task.Run(async () => localStorage.SetItemAsync<bool>(nameof(ShowKnofree), value));
+        }
+    } = true;
 
     #endregion //Settings
 
@@ -173,4 +185,14 @@
         set { field = value; }
     } = string.Empty;
     #endregion //SNI Connection Info
+
+    public string Flags
+    {
+        get;
+        set
+        {
+            field = value; StateHasChanged(); notifier.PublishEvent(TrackerEvent.SettingUpdated,
+            new StatePropertyChangedArgs(nameof(Flags), true));
+        }
+    } = string.Empty;
 }

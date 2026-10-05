@@ -1,0 +1,42 @@
+﻿@inject TrackerNotifier notifier;
+
+@if (AppState.ShowKnofree && Icon is not null)
+{
+    <div>
+        <span>Knofree: </span>
+        <ClickableIcon Icon="Icon" />
+    </div>
+}
+
+@code {
+    [CascadingParameter]
+    public CascadingAppState AppState { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        notifier.RegisterCallback(TrackerEvent.SettingUpdated, new(this, OnFlagsUpdated));
+        await base.OnInitializedAsync();
+    }
+
+    KnofreeIcon? Icon = null;
+
+    void OnFlagsUpdated(StatePropertyChangedArgs args)
+    {
+        if (args.PropertyName != nameof(AppState.Flags)) { return; }
+        Icon = GetKnofreeSetting();
+        StateHasChanged();
+    }
+
+    private KnofreeIcon? GetKnofreeSetting()
+    {
+        var baseSetting = AppState.Flags.Split(" ").FirstOrDefault(x => x.StartsWith("K",
+StringComparison.CurrentCulture))?.Split("/").FirstOrDefault(x => x.StartsWith("nofree")) ?? string.Empty;
+        return baseSetting switch
+        {
+            "nofree" => new KnofreeIcon(KnofreeOption.DMist),
+            "nofree:dwarf" => new KnofreeIcon(KnofreeOption.Cid),
+            "nofree:package" => new KnofreeIcon(KnofreeOption.Package),
+            _ => null
+        };
+    }
+}
