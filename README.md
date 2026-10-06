@@ -33,11 +33,13 @@ If you switch to a different seed, the tracker will reset the key items state an
 * Allows tracking of the state of Knofree, in a similar manner to KI state changes
 * Ability to track if D.Mist has been defeated, when D.Mist can be a KI check. (and/or handle Knofree:package or Knofree:dwarf)
 * 4.x seeds: display a "do x of y for {game | crystal}" underneath the objectives
+* Indicate the Hard Required objectives, when that setting is used on the Galeswift fork
+* Indicate Key Items required for objectives (does not include hook/magma for things requiring underground access)
 
 ## Possible Roadmap Items
 The following are some likely additions and improvements to the tracker
-* Indicate Key Items required for objectives
-* Indicate the Hard Required objectives, when that setting is used on the Galeswift fork
+* Setting for how to indicate objective-required Key Item (e.g. change the color differentiator)
+* Setting to disable objective-required KI indicator
 * KI indication on/off
 * Displaying flags
 * Displaying flag annotations
@@ -45,6 +47,9 @@ The following are some likely additions and improvements to the tracker
 * Version displayed - version is currently obtained but never displayed
 * 5.0 objective completion cascade. e.g. if Objecive Group B has an objective that requires an objective in Group A to be completed, when the first objective in Group A is marked, that Group B objective automatically is marked as completed.
 * Additional Boss Preview locations
+* Dark Matter tracker
+  * increments on objective completion
+  * additional input for finding in chests
 
 ## SNI
 * [Get SNI](https://github.com/alttpo/sni/releases)
