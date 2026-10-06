@@ -2,16 +2,20 @@
 
 <li>
     <input id="@ObjectiveText" type="checkbox" />
-    <label for="@ObjectiveText">@ObjectiveText</label>
+    <label for="@ObjectiveText">@ObjectiveText @if(IsRequired) {
+        <span> (required)</span>
+    }
+</label>
 </li>
 @code {
     /*
-    could know if objective is required
-    could learn/be able to determine what KI are required to use it
-    Parent component should list how many are overall required
+        could learn/be able to determine what KI are required to use it
     */
     [Parameter]
     public required string ObjectiveText { get; init; }
+
+    [Parameter]
+    public bool IsRequired { get; init; } = false;
 
     protected override void OnInitialized()
     {

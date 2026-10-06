@@ -6,3 +6,9 @@ input:checked+label {
     text-decoration: line-through;
     color: slategray
 }
+
+span {
+    font-size: .9rem;
+    font-variant-caps: all-petite-caps;
+    color: hsl(from var(--color) h s calc(l - 15))
+}
