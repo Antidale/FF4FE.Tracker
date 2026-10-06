@@ -1,5 +1,6 @@
 ﻿@using FF4FE.Tracker.Features.Objectives
 @using FeTracker.Common.Enums
+@using FeTracker.Common.RegexHelpers
 @using FeTracker.Sni.Classes
 @using FeTracker.Sni.Models
 @inject TrackerNotifier trackerNotifier
@@ -7,11 +8,13 @@
 @if (_objectives.Any())
 {
     <ul>
-        @foreach (var obj in _objectives)
+        @for (var i = 0; i < _objectives.Count; i++)
         {
-            <Objective ObjectiveText="@obj" />
+            var isRequired = _hardRequiredObjectives.Contains(i);
+            <Objective ObjectiveText="@_objectives[i]" IsRequired="isRequired" />
         }
     </ul>
+    <p>@_completionText</p>
 }
 else
 {
@@ -28,11 +31,29 @@ else
     CascadingAppState AppState { get; set; } = new();
     private List<string> _objectives = [];
     private List<ObjectiveGroup> _groups = [];
+    private string _completionText = string.Empty;
+    private List<int> _hardRequiredObjectives = [];
 
     protected override void OnInitialized()
     {
         trackerNotifier.RegisterCallback(TrackerEvent.RomUpdated, new(this, GetMetadataAsync));
+        
         base.OnInitialized();
+    }
+
+    public void OnFlagsUpdated(string flags)
+    {
+        if (_objectives.Count == 0) { return; }
+
+        if (flags == "(hidden)")
+        {
+            _completionText = "Winning's a secret to everybody"; return;
+        }
+        
+        var winCondition = FlagsRegexHelper.GetV4WinCondition(flags);
+        _hardRequiredObjectives = [.. FlagsRegexHelper.GetRequiredObjectiveNumbers(flags).Select(x => x - 1)];
+        var requiredCount = FlagsRegexHelper.GetRequiredObjectiveCount(flags);
+        _completionText = $"Do {requiredCount} for {winCondition}";
     }
 
     private async Task GetMetadataAsync(StatePropertyChangedArgs args)
@@ -45,13 +66,6 @@ else
             return;
         }
 
-        if (args.PropertyName == nameof(AppState.RomFileName)
-           || args.PropertyName == nameof(AppState.RomHeader00FFB0))
-        {
-            AppState.Flags = "";
-            _objectives = [];
-        }
-
         var seedDetail = await MetadataHelper.GetSeedDetails(AppState.Channel!, AppState.Uri);
         if (seedDetail.Success)
         {
@@ -60,6 +74,7 @@ else
             _groups = seedDetail.Data.ObjectiveGroups;
             AppState.Version = seedDetail.Data.Version;
             AppState.ConnectionError = string.Empty;
+            OnFlagsUpdated(seedDetail.Data.Flags);
         }
         else
         {
