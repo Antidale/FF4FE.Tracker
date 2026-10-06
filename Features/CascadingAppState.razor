@@ -192,7 +192,7 @@
         set
         {
             field = value; StateHasChanged(); notifier.PublishEvent(TrackerEvent.SettingUpdated,
-            new StatePropertyChangedArgs(nameof(Flags), true));
+            new StatePropertyChangedArgs(nameof(Flags), field));
         }
     } = string.Empty;
 }

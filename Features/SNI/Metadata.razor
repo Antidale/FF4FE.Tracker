@@ -61,12 +61,13 @@ else
         if (!AppState.ShouldReadMetadata
             || !AppState.IsFeHeader
             || AppState.RomFileName.Contains(".bin")
-            || !string.IsNullOrWhiteSpace(AppState.ConnectionError))
+            || !string.IsNullOrWhiteSpace(AppState.ConnectionError)
+            || args.PropertyName == "Objectives")
         {
             return;
         }
 
-        var seedDetail = await MetadataHelper.GetSeedDetails(AppState.Channel!, AppState.Uri);
+        var seedDetail = await MetadataReader.GetSeedDetails(AppState.Channel!, AppState.Uri);
         if (seedDetail.Success)
         {
             AppState.Flags = seedDetail.Data.Flags;
@@ -75,6 +76,9 @@ else
             AppState.Version = seedDetail.Data.Version;
             AppState.ConnectionError = string.Empty;
             OnFlagsUpdated(seedDetail.Data.Flags);
+            List<string> objectiveStrings = _objectives.Concat(_groups.SelectMany(x => x.Tasks.Select(t => t.Objective))).ToList()
+?? [];
+            await trackerNotifier.PublishEvent(TrackerEvent.ObjectivesSet, new("Objectives", objectiveStrings));
         }
         else
         {
