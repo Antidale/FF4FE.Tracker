@@ -35,12 +35,11 @@ If you switch to a different seed, the tracker will reset the key items state an
 * 4.x seeds: display a "do x of y for {game | crystal}" underneath the objectives
 * Indicate the Hard Required objectives, when that setting is used on the Galeswift fork
 * Indicate Key Items required for objectives (does not include hook/magma for things requiring underground access)
+  * The color of this indicator can be changed in Settings, by updating the Required Indicator Color. This accepts any string that evaluates to a color
+  * Disabling this feature can be achieved by just setting the Required Indicator color to the same value as Background color, using `var(--background)`, which is a different way of doing the same thing.
 
 ## Possible Roadmap Items
 The following are some likely additions and improvements to the tracker
-* Setting for how to indicate objective-required Key Item (e.g. change the color differentiator)
-* Setting to disable objective-required KI indicator
-* KI indication on/off
 * Displaying flags
 * Displaying flag annotations
   * Possible: customizing flag annotations
