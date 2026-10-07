@@ -17,11 +17,21 @@
                 </section>
                 <section class="grid-row">
                     <div>Background Color</div>
-                    <InputText @bind-Value="@AppState.BackgroundColor"></InputText>
+                    <InputText style="width: 100%;" @bind-Value="@AppState.BackgroundColor" placeholder="#07273f">
+                    </InputText>
                 </section>
                 <section class="grid-row">
                     <div>Text Color</div>
-                    <InputText @bind-Value="@AppState.TextColor"></InputText>
+                    <InputText style="width: 100%;" @bind-Value="@AppState.TextColor" placeholder="white"></InputText>
+                </section>
+                <section class="grid-row">
+                    <div>Required Indicator Color</div>
+                    <InputText style="width: 100%;" @bind-Value="@AppState.ObjKiColor"
+                               placeholder="hsl(from var(--background) h s calc(l + 10))" />
+                </section>
+                <section class="grid-row">
+                    <div>Polling Interval (seconds)</div>
+                    <InputNumber @bind-Value="@AppState.PollingFrequency" step="1" min="1" max="60"></InputNumber>
                 </section>
                 <section class="grid-row">
                     <label for="@nameof(AppState.ShouldReadMetadata)">Read Metadata</label>
@@ -36,10 +46,7 @@
                     <label for="@nameof(AppState.ShowKnofree)">Knofree Info</label>
                     <InputCheckbox id="@nameof(AppState.ShowKnofree)" @bind-Value="@AppState.ShowKnofree" />
                 </section>
-                <section class="grid-row">
-                    <div>Polling Interval (seconds)</div>
-                    <InputNumber @bind-Value="@AppState.PollingFrequency" step="1" min="1" max="60"></InputNumber>
-                </section>
+                
             </section>
         </div>
     </dialog>
