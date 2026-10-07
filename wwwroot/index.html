@@ -41,18 +41,20 @@
             trackerBackground[0].style.setProperty("--tracker-border-color", value)
         }
 
+        window.setRequiredIndicator = (value) => {
+            setCustomProperty("--required-color", value)
+        }
+
         window.setCustomProperty = (customProperty, value) => {
             try {
                 if (!customProperty.startsWith("--")) {
                     return;
                 }
                 document.documentElement.style.setProperty(customProperty, value)
-
             }
             catch (err) {
                 console.log(`tried to set ${customProperty} as if it were a custom property`)
             }
-
         }
 
         window.closeDialogById = (elementId) => {
