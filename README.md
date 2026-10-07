@@ -49,6 +49,7 @@ The following are some likely additions and improvements to the tracker
 * Dark Matter tracker
   * increments on objective completion
   * additional input for finding in chests
+* Allow customizing the font
 
 ## SNI
 * [Get SNI](https://github.com/alttpo/sni/releases)
