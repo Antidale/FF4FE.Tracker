@@ -36,6 +36,7 @@ If you switch to a different seed, the tracker will reset the key items state an
 * Indicate the Hard Required objectives, when that setting is used on the Galeswift fork
 * Indicate Key Items required for objectives (does not include hook/magma for things requiring underground access)
 * Displays the non-objective flags in a somewhat more readable manner than the basic flagstring. Visibility toggled by the flag icon in the upper right.
+* Track completed objective count on 4.x seeds, based on user manual tracking
 
 ## Possible Roadmap Items
 The following are some likely additions and improvements to the tracker
