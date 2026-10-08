@@ -35,20 +35,22 @@ If you switch to a different seed, the tracker will reset the key items state an
 * 4.x seeds: display a "do x of y for {game | crystal}" underneath the objectives
 * Indicate the Hard Required objectives, when that setting is used on the Galeswift fork
 * Indicate Key Items required for objectives (does not include hook/magma for things requiring underground access)
-  * The color of this indicator can be changed in Settings, by updating the Required Indicator Color. This accepts any string that evaluates to a color
-  * Disabling this feature can be achieved by just setting the Required Indicator color to the same value as Background color, using `var(--background)`, which is a different way of doing the same thing.
+* Displays the non-objective flags in a somewhat more readable manner than the basic flagstring. Visibility toggled by the flag icon in the upper right.
 
 ## Possible Roadmap Items
 The following are some likely additions and improvements to the tracker
-* Displaying flags
-* Displaying flag annotations
+* Displaying flag annotations/difficulty marker
   * Possible: customizing flag annotations
-* Version displayed - version is currently obtained but never displayed
-* 5.0 objective completion cascade. e.g. if Objecive Group B has an objective that requires an objective in Group A to be completed, when the first objective in Group A is marked, that Group B objective automatically is marked as completed.
-* Additional Boss Preview locations
 * Dark Matter tracker
   * increments on objective completion
   * additional input for finding in chests
+* Version displayed - version is currently obtained but never displayed - low priority: not useful
+* 5.0 objective completion cascade. e.g. if Objecive Group B has an objective that requires an objective in Group A to be completed, when the first objective in Group A is marked, that Group B objective automatically is marked as completed.
+* Additional Boss Preview locations - lower priority, not very useful
+  * Dwarf 2 (visible from Earth Crystal)
+  * Hook 2 (visible from Edge character spot, Top of Lower Babil)
+  * Top of Lower Babil (visible while getting to Falcon)
+* Allow customizing the font
 
 ## SNI
 * [Get SNI](https://github.com/alttpo/sni/releases)
