@@ -20,6 +20,8 @@
 dialog {
     color: var(--color);
     background-color: var(--background);
+    width: 70%;
+    max-height: 80%;
 }
 
 .input-grid {
@@ -63,7 +65,19 @@ p {
     text-align: center;
 }
 
+h2 {
+    font-size: 1.3rem;
+    margin: 0;
+}
+
 p {
+    margin-top: 0;
+    margin-bottom: .5rem;
     padding-left: 2rem;
     padding-right: 2rem;
+}
+
+.test {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
 }

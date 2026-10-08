@@ -159,3 +159,13 @@ a,
     font-size: 1.6rem;
     padding-left: 4px;
 }
+
+.smallcaps-heading {
+    font-variant-caps: all-small-caps;
+    color: hsl(from var(--color) h s calc(l - 10));
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+}

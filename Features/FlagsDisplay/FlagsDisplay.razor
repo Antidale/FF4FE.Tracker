@@ -1,4 +1,7 @@
-﻿@* 
+﻿@using FeTracker.Common.Helpers
+@inject TrackerNotifier notifier;
+
+@* 
     another button/popover combination, this time displaying the flags that are **not** objectives.
     first pass is just listing out the rest of the the flags
     later on we display them as sections, each flag subgroup as a pill icon and color code some of the **dangerous/hard to remember** ones 
@@ -9,9 +12,16 @@
     <section id="flags-display">
         <button popovertarget="flags-popover" class="flags-button nf nf-fa-flag">
             <dialog popover id="flags-popover">
-                <p>@string.Join(Environment.NewLine, AppState.Flags.Split(" ").Where(section => !section.StartsWith(
-                                                            "O", StringComparison.CurrentCulture)))
-                </p>
+                <section class="test">
+                    @foreach (var pair in FlagGroups)
+                    {
+                        <section class="flag-group">
+                            <h2 class="smallcaps-heading">@pair.Key</h2>
+                            <p>@string.Join(", ", pair.Value)</p>
+                        </section>
+                    }
+                </section>
+                
             </dialog>
         </button>
     </section>
@@ -20,4 +30,22 @@
 @code {
     [CascadingParameter]
     CascadingAppState AppState { get; set; } = new();
+
+    Dictionary<string, List<string>> FlagGroups { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        notifier.RegisterCallback(TrackerEvent.SettingUpdated, new(this, ParseFlags));
+        await base.OnInitializedAsync();
+    }
+
+    private void ParseFlags(StatePropertyChangedArgs args)
+    {
+        if (args.PropertyName != nameof(AppState.Flags)) { return; }
+        
+        FlagGroups = FlagParsingHelper.ParseFlagsToDictionary(AppState.Flags)
+                        .Where(x => x.Key != "Objectives")
+                        .ToDictionary(x => x.Key, y => y.Value) ?? [];
+    }
+
 }
