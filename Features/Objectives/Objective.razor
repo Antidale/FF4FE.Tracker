@@ -1,16 +1,16 @@
 @inject TrackerNotifier notifier
 
 <li>
-    <input id="@ObjectiveText" type="checkbox" />
-    <label for="@ObjectiveText">@ObjectiveText @if(IsRequired) {
-        <span> (required)</span>
-    }
-</label>
+    <input id="@ObjectiveText" type="checkbox" @onchange="OnChange" />
+    <label for="@ObjectiveText">@ObjectiveText @if(IsRequired)
+        {
+            <span> (required)</span>
+        }
+    </label>
 </li>
+
 @code {
-    /*
-        could learn/be able to determine what KI are required to use it
-    */
+
     [Parameter]
     public required string ObjectiveText { get; init; }
 
@@ -24,7 +24,15 @@
 
     private void HandleNotification()
     {
+
+    }
+
+    private void OnChange(ChangeEventArgs args)
+    {
+        if (args is null || args.Value is null) { return; }
+        Console.WriteLine(args?.Value?.GetType());
         
+        notifier.PublishEvent(TrackerEvent.ObjectiveUpdated, new(ObjectiveText, args?.Value));
     }
 
 }

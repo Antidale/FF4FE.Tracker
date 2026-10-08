@@ -1,59 +1,24 @@
 ﻿@using FF4FE.Tracker.Features.Objectives
 @using FeTracker.Common.Enums
-@using FeTracker.Common.RegexHelpers
 @using FeTracker.Sni.Classes
 @using FeTracker.Sni.Models
 @inject TrackerNotifier trackerNotifier
 
-@if (_objectives.Any())
-{
-    <ul>
-        @for (var i = 0; i < _objectives.Count; i++)
-        {
-            var isRequired = _hardRequiredObjectives.Contains(i);
-            <Objective ObjectiveText="@_objectives[i]" IsRequired="isRequired" />
-        }
-    </ul>
-    <p>@_completionText</p>
-}
-else
-{
-    <section class="group-grid">
-        @foreach (var group in _groups)
-        {
-            <V5ObjectiveGroup Group="@group" />
-        }
-    </section>
-}
 
+<ObjectivesList Objectives="@_objectives" v5ObjectiveGroups="@_groups" />
+   
 @code {
     [CascadingParameter]
     CascadingAppState AppState { get; set; } = new();
     private List<string> _objectives = [];
     private List<ObjectiveGroup> _groups = [];
-    private string _completionText = string.Empty;
-    private List<int> _hardRequiredObjectives = [];
+
 
     protected override void OnInitialized()
     {
         trackerNotifier.RegisterCallback(TrackerEvent.RomUpdated, new(this, GetMetadataAsync));
         
         base.OnInitialized();
-    }
-
-    public void OnFlagsUpdated(string flags)
-    {
-        if (_objectives.Count == 0) { return; }
-
-        if (flags == "(hidden)")
-        {
-            _completionText = "Winning's a secret to everybody"; return;
-        }
-        
-        var winCondition = FlagsRegexHelper.GetV4WinCondition(flags);
-        _hardRequiredObjectives = [.. FlagsRegexHelper.GetRequiredObjectiveNumbers(flags).Select(x => x - 1)];
-        var requiredCount = FlagsRegexHelper.GetRequiredObjectiveCount(flags);
-        _completionText = $"Do {requiredCount} for {winCondition}";
     }
 
     private async Task GetMetadataAsync(StatePropertyChangedArgs args)
@@ -75,7 +40,6 @@ else
             _groups = seedDetail.Data.ObjectiveGroups;
             AppState.Version = seedDetail.Data.Version;
             AppState.ConnectionError = string.Empty;
-            OnFlagsUpdated(seedDetail.Data.Flags);
             List<string> objectiveStrings = _objectives.Concat(_groups.SelectMany(x => x.Tasks.Select(t => t.Objective))).ToList()
 ?? [];
             await trackerNotifier.PublishEvent(TrackerEvent.ObjectivesSet, new("Objectives", objectiveStrings));

@@ -1,0 +1,79 @@
+﻿@using FeTracker.Common.RegexHelpers
+@using FeTracker.Sni.Models
+@inject TrackerNotifier notifier;
+
+@if (Objectives.Count > 0)
+{
+    <ul>
+        @for (var i = 0; i < Objectives.Count; i++)
+        {
+            var isRequired = _hardRequiredObjectives.Contains(i);
+            <Objective ObjectiveText="@Objectives[i]" IsRequired="isRequired" />
+        }
+        
+        <p>@_completionText @if(!_completionText.Contains("all"))
+            {
+                <span> (@_objectivesCompleted done)</span>
+            }
+        </p>
+    </ul>
+}
+else
+{
+    <section class="group-grid">
+        @foreach (var group in v5ObjectiveGroups)
+        {
+            <V5ObjectiveGroup Group="@group" />
+        }
+    </section>
+}
+
+@code {
+    [Parameter]
+    public required List<string> Objectives { get; set; }
+
+    [Parameter]
+    public required List<ObjectiveGroup> v5ObjectiveGroups { get; set; }
+
+    private string _completionText = string.Empty;
+    private List<int> _hardRequiredObjectives = [];
+    private int _objectivesCompleted = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        notifier.RegisterCallback(TrackerEvent.ObjectiveUpdated, new(this, OnObjectiveUpdated));
+        notifier.RegisterCallback(TrackerEvent.SettingUpdated, new(this, OnFlagsUpdated));
+        await base.OnInitializedAsync();
+    }
+
+    private void OnObjectiveUpdated(StatePropertyChangedArgs args)
+    {
+        if (args?.Value?.GetType() != typeof(bool)) { return; }
+
+        var adjustment = (bool)args.Value ? 1 : -1;
+        _objectivesCompleted += adjustment;
+    }
+
+    private void OnFlagsUpdated(StatePropertyChangedArgs args)
+    {
+        if (args is null
+            || args.PropertyName != nameof(CascadingAppState.Flags)
+            || args.Value?.GetType() != typeof(string)
+            )
+        {
+            return;
+        }
+
+        var flags = args.Value.ToString() ?? string.Empty;
+
+        if (flags == "(hidden)")
+        {
+            _completionText = "Winning's a secret to everybody"; return;
+        }
+        
+        var winCondition = FlagsRegexHelper.GetV4WinCondition(flags);
+        _hardRequiredObjectives = [.. FlagsRegexHelper.GetRequiredObjectiveNumbers(flags).Select(x => x - 1)];
+        var requiredCount = FlagsRegexHelper.GetRequiredObjectiveCount(flags);
+        _completionText = $"Do {requiredCount} for {winCondition}";
+    }
+}
