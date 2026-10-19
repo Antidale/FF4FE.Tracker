@@ -1,4 +1,4 @@
-﻿@using FeTracker.Common.RegexHelpers
+﻿@using FeTracker.Common.Models
 @using FeTracker.Sni.Models
 @inject TrackerNotifier notifier;
 
@@ -42,7 +42,7 @@ else
     protected override async Task OnInitializedAsync()
     {
         notifier.RegisterCallback(TrackerEvent.ObjectiveUpdated, new(this, OnObjectiveUpdated));
-        notifier.RegisterCallback(TrackerEvent.SettingUpdated, new(this, OnFlagsUpdated));
+        notifier.RegisterCallback(TrackerEvent.RomUpdated, new(this, OnFlagsUpdated));
         await base.OnInitializedAsync();
     }
 
@@ -58,22 +58,22 @@ else
     {
         if (args is null
             || args.PropertyName != nameof(CascadingAppState.Flags)
-            || args.Value?.GetType() != typeof(string)
+            || args.Value?.GetType() != typeof(Flags)
             )
         {
             return;
         }
 
-        var flags = args.Value.ToString() ?? string.Empty;
+        var flags = (Flags)args.Value ?? new Flags("", "");
 
-        if (flags == "(hidden)")
+        if (flags.Flagstring == "(hidden)")
         {
             _completionText = "Winning's a secret to everybody"; return;
         }
         
-        var winCondition = FlagsRegexHelper.GetV4WinCondition(flags);
-        _hardRequiredObjectives = [.. FlagsRegexHelper.GetRequiredObjectiveNumbers(flags).Select(x => x - 1)];
-        var requiredCount = FlagsRegexHelper.GetRequiredObjectiveCount(flags);
+        var winCondition = flags.GetV4WinCondition();
+        _hardRequiredObjectives = [.. flags.GetRequiredObjectiveNumbers().Select(x => x - 1)];
+        var requiredCount = flags.GetGoalObjectiveCount();
         _completionText = $"Do {requiredCount} for {winCondition}";
     }
 }

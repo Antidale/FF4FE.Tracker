@@ -5,9 +5,11 @@
 @using FeTracker.Sni.Services
 @using Google.Protobuf
 @using Grpc.Net.Client
+@inherits AppStateBase
 @inject TrackerNotifier notifier;
 @inject IJSRuntime JSRuntime;
 @inject ILocalStorageService localStorage;
+
 
 <CascadingValue Value="this">
     @ChildContent
@@ -190,21 +192,5 @@
             return evalString.Equals("FFIV: FREE ENTERPRISE");
         }
     }
-
-    public string Version
-    {
-        get;
-        set { field = value; }
-    } = string.Empty;
     #endregion //SNI Connection Info
-
-    public string Flags
-    {
-        get;
-        set
-        {
-            field = value; StateHasChanged(); notifier.PublishEvent(TrackerEvent.SettingUpdated,
-            new StatePropertyChangedArgs(nameof(Flags), field));
-        }
-    } = string.Empty;
 }

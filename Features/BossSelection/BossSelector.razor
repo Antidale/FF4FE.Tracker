@@ -51,7 +51,11 @@
         await base.OnInitializedAsync();
     }
 
-    private void ResetMetadata(StatePropertyChangedArgs args) => Reset();
+    private void ResetMetadata(StatePropertyChangedArgs args)
+    {
+        if (args.PropertyName == nameof(AppState.RomFileName))
+            Reset();
+    }
 
     private void HandleBossSelected(StatePropertyChangedArgs args)
     {
