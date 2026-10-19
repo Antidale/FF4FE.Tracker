@@ -33,7 +33,7 @@
     protected override async Task OnInitializedAsync()
     {
         await SetupTimerAsync();
-        trackerNotifier.RegisterCallback(FeTracker.Common.Enums.TrackerEvent.SettingUpdated, new(this, HandlePollingUpdated));
+        trackerNotifier.RegisterCallback(TrackerEvent.SettingUpdated, new(this, HandlePollingUpdated));
         await base.OnInitializedAsync();
     }
 

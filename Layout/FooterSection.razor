@@ -1,7 +1,11 @@
-@using System.IO.Enumeration
 @if (!string.IsNullOrWhiteSpace(AppState.RomFileName))
 {
     <p class="rom-name">Currently Playing: @fileName</p>
+}
+
+@if (!string.IsNullOrWhiteSpace(AppState.Version.VersionString))
+{
+    <p>Version: @AppState.Version.VersionString</p>
 }
 
 @if (!string.IsNullOrWhiteSpace(AppState.ConnectionError))

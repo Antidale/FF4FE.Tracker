@@ -1,5 +1,6 @@
 ﻿@using FF4FE.Tracker.Features.Objectives
 @using FeTracker.Common.Enums
+@using FeTracker.Common.Models
 @using FeTracker.Sni.Classes
 @using FeTracker.Sni.Models
 @inject TrackerNotifier trackerNotifier
@@ -17,7 +18,7 @@
     protected override void OnInitialized()
     {
         trackerNotifier.RegisterCallback(TrackerEvent.RomUpdated, new(this, GetMetadataAsync));
-        
+
         base.OnInitialized();
     }
 
@@ -25,10 +26,15 @@
     {
         if (!AppState.ShouldReadMetadata
             || !AppState.IsFeHeader
-            || AppState.RomFileName.Contains(".bin")
             || !string.IsNullOrWhiteSpace(AppState.ConnectionError)
-            || args.PropertyName == "Objectives")
+            || args.PropertyName != nameof(AppState.RomFileName))
         {
+            return;
+        }
+
+        if (AppState.RomFileName.Contains(".bin"))
+        {
+            await ResetMetadata();
             return;
         }
 
@@ -46,16 +52,19 @@
         }
         else
         {
-            ResetMetadata(new(nameof(GetMetadataAsync), true));
+            await ResetMetadata();
         }
         StateHasChanged();
     }
 
-    private void ResetMetadata(StatePropertyChangedArgs args)
+    private async Task ResetMetadata()
     {
-        AppState.Flags = string.Empty;
+        AppState.Flags = new Flags("", "");
+        AppState.Version = new FeVersion("");
         _objectives = [];
+        _groups = [];
         AppState.ConnectionError = string.Empty;
+        await trackerNotifier.PublishEvent(TrackerEvent.ObjectivesSet, new("Objectives", new List<string>()));
         StateHasChanged();
     }
 }

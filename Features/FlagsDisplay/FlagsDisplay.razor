@@ -7,7 +7,7 @@
     later on we display them as sections, each flag subgroup as a pill icon and color code some of the **dangerous/hard to remember** ones 
  *@
 
-@if (!string.IsNullOrWhiteSpace(AppState.Flags))
+@if (!string.IsNullOrWhiteSpace(AppState.Flags.Flagstring))
 {
     <section id="flags-display">
         <button popovertarget="flags-popover" class="flags-button nf nf-fa-flag">
@@ -21,7 +21,6 @@
                         </section>
                     }
                 </section>
-                
             </dialog>
         </button>
     </section>
@@ -35,7 +34,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        notifier.RegisterCallback(TrackerEvent.SettingUpdated, new(this, ParseFlags));
+        notifier.RegisterCallback(TrackerEvent.RomUpdated, new(this, ParseFlags));
         await base.OnInitializedAsync();
     }
 
@@ -43,7 +42,7 @@
     {
         if (args.PropertyName != nameof(AppState.Flags)) { return; }
         
-        FlagGroups = FlagParsingHelper.ParseFlagsToDictionary(AppState.Flags)
+        FlagGroups = AppState.Flags.ToDictionary()
                         .Where(x => x.Key != "Objectives")
                         .ToDictionary(x => x.Key, y => y.Value) ?? [];
     }
