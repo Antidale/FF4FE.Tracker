@@ -34,9 +34,8 @@
     {
         try
         {
-            var baseSetting = AppState.Flags.ToDictionary()["K"].FirstOrDefault(x => x.StartsWith("nofree"));
-            @* var baseSetting = AppState.Flags.Flagstring.Split(" ").FirstOrDefault(x => x.StartsWith("K",
-StringComparison.CurrentCulture))?.Split("/").FirstOrDefault(x => x.StartsWith("nofree")) ?? string.Empty; *@
+            var baseSetting = AppState.Flags.ToDictionary()["Key Items"].FirstOrDefault(x => x.StartsWith("nofree"));
+
             return baseSetting switch
             {
                 "nofree" => new KnofreeIcon(KnofreeOption.DMist),
